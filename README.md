@@ -1,18 +1,40 @@
 # Multilingual Semantic Retrieval Engine for Gurbani
 
-Search the Sri Guru Granth Sahib with citations using Gurmukhi, common Roman
-Punjabi terms, or a practical set of English concepts.
+Explore the Sri Guru Granth Sahib through multilingual source search and
+citation-grounded answers. Ask conceptual questions in English, search common
+Roman Punjabi terms, or enter Gurmukhi—and always trace the result back to its
+exact Ang and Shabad OS source line.
 
-## Current State
+## What It Does
 
-- FastAPI backend with `/search` and `/health`
-- Web UI at `/`
-- Clickable result cards with animated full-Shabad reading context
-- Optional AI answers generated only from retrieved passages, with validated citations
-- Corpus-backed retrieval across 60,555 SGGS lines
-- Unicode Gurmukhi, Roman transliteration, English translation, Ang, writer,
-  section/Raag, and stable Shabad OS line IDs
-- Lightweight alias + lexical/character retrieval (no API key or vector database)
+- Searches 5,549 complete Shabads with hybrid lexical and semantic retrieval.
+- Supports English concepts, common Roman Punjabi vocabulary, and Gurmukhi.
+- Shows Gurmukhi, transliteration, English translation, Ang, author, Raag, and
+  stable source IDs.
+- Opens any result into its complete Shabad context.
+- Generates an optional plain-language overview using only retrieved passages.
+- Validates generated citation IDs before returning an answer.
+- Supports grounded follow-up questions without treating earlier AI prose as
+  scriptural evidence.
+
+## Retrieval and Grounding
+
+```text
+Question
+   ├── SQLite FTS5 / BM25 keyword search
+   └── Shabad-level semantic embedding search
+                  ↓
+       Reciprocal Rank Fusion (RRF)
+                  ↓
+       Diverse, exact line citations
+                  ↓
+       Citation-constrained AI answer
+```
+
+The full-text and semantic searches operate at Shabad level so a line can be
+found through its surrounding meaning. The UI and generated answer still cite
+the most relevant exact line. Embeddings are stored in the local SQLite index;
+no hosted vector database is required.
 
 ## Run App
 
@@ -23,28 +45,47 @@ python -m pip install -r requirements.txt
 uvicorn backend.app.main:app --reload
 ```
 
-To enable grounded AI answers, create an OpenAI API key and either set it in
-the server environment or copy `.env.example` to an ignored `.env` file:
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). Interactive API
+documentation is available at
+[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+
+Source search works locally without an API key. To enable grounded answers and
+semantic retrieval, copy `.env.example` to `.env` and add your key:
 
 ```bash
-export OPENAI_API_KEY="your-key"
-export OPENAI_MODEL="gpt-5.6-terra"  # optional
-uvicorn backend.app.main:app --reload
+cp .env.example .env
 ```
 
-`Search sources` always works locally. `Ask Gurbani` retrieves SGGS passages
-first, sends only those passages to the model, rejects invented citation IDs,
-and displays the exact sources below the response. Follow-up questions trigger
-a fresh retrieval and grounded answer; earlier questions provide conversational
-context but earlier generated prose is not treated as evidence.
+```dotenv
+OPENAI_API_KEY=your-key
+OPENAI_MODEL=gpt-5.6-terra
+```
 
-Open:
+The ignored `.env` file and generated SQLite index are never committed.
 
-- `http://127.0.0.1:8000/` (UI)
-- `http://127.0.0.1:8000/docs` (API docs)
+The local BM25 index is created automatically as `data/search.sqlite`. To add
+semantic retrieval, generate the embeddings once:
 
-Try searches such as `simran`, `inner peace`, `naam`, `hukam`, `ਸਿਮਰਨ`, or
-`ਹੁਕਮ`.
+```bash
+.venv/bin/python scripts/build_search_index.py --embeddings
+```
+
+Later app starts reuse those embeddings. If no key or embeddings are available,
+the indexed BM25 search remains fully functional.
+
+## Questions to Try
+
+- `How can I overcome my ego in everyday life?`
+- `What does Gurbani teach about serving others?`
+- `How should I deal with fear of death?`
+- `What does it mean to live according to Hukam?`
+- `How can I find peace when my mind is restless?`
+- `Why should we remember Naam?`
+- `ਕੀ ਹੁਕਮ ਹੈ?`
+- `ਸਿਮਰਨ`
+
+After an answer, try a follow-up such as `What practical actions do these
+passages recommend?`
 
 ## Dataset
 
@@ -72,11 +113,26 @@ curl -L https://github.com/shabados/database/releases/download/4.8.7/database.sq
 
 Runtime schema: `data/schema/verse.schema.json`.
 
-## Validation
+## API
 
-Validate runtime corpus:
+- `POST /search` retrieves cited SGGS lines.
+- `POST /ask` retrieves sources and produces a grounded answer.
+- `GET /passage/{verse_id}` returns the complete Shabad for a selected line.
+- `GET /health` reports server health.
+
+## Validation and Tests
+
+Validate the corpus and run the test suite:
 
 ```bash
 .venv/bin/python scripts/prepare_corpus.py --input data/sggs.jsonl
 .venv/bin/python -m unittest discover -s tests
 ```
+
+## Scope
+
+This is a research and reading aid, not an authority on Sikhi or a replacement
+for studying Gurbani with knowledgeable teachers and the wider tradition.
+Generated explanations are limited to the retrieved passages and the included
+English translation, currently attributed to Dr. Sant Singh Khalsa. Exact
+Gurmukhi source lines are always presented so interpretations can be checked.

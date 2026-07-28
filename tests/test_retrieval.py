@@ -33,6 +33,20 @@ class RetrievalSmokeTests(unittest.TestCase):
             {results[0].context.shabad_id},
         )
 
+    def test_results_are_diverse_by_shabad(self) -> None:
+        results = self.retriever.search(
+            SearchRequest(query="How can I overcome ego?", top_k=8)
+        )
+        shabad_ids = [result.context.shabad_id for result in results]
+        self.assertEqual(len(shabad_ids), len(set(shabad_ids)))
+
+    def test_service_query_prioritizes_service_passages(self) -> None:
+        results = self.retriever.search(
+            SearchRequest(query="What does Gurbani say about serving others?", top_k=3)
+        )
+        translations = " ".join(result.translation or "" for result in results).lower()
+        self.assertTrue("seva" in translations or "serv" in translations)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -54,9 +54,8 @@ def passage(verse_id: str) -> PassageResponse:
 
 @app.post("/ask", response_model=AskResponse)
 def ask(request: AskRequest) -> AskResponse:
-    retrieval_query = " ".join([*request.previous_questions[-2:], request.question])
     sources = retriever.search(
-        SearchRequest(query=retrieval_query, top_k=request.top_k)
+        SearchRequest(query=request.question, top_k=request.top_k)
     )
     if not sources:
         raise HTTPException(status_code=404, detail="No relevant SGGS passages found")

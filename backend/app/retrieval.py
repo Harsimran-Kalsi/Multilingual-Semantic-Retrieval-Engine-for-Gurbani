@@ -1,7 +1,8 @@
 import json
-import math
 import os
 import re
+import sqlite3
+import threading
 from pathlib import Path
 from typing import Any, Optional
 
@@ -15,41 +16,46 @@ from backend.app.schemas import (
 
 TOKEN_SPLIT_RE = re.compile(r"[^\w\u0A00-\u0A7F]+", flags=re.UNICODE)
 GURMUKHI_RE = re.compile(r"[\u0A00-\u0A7F]")
+ENGLISH_STOPWORDS = {
+    "a", "about", "an", "and", "are", "as", "at", "be", "been", "being",
+    "but", "by", "can", "could", "did", "do", "does", "for", "from", "had",
+    "has", "have", "he", "her", "him", "his", "how", "i", "if", "in", "into",
+    "is", "it", "its", "me", "my", "of", "on", "or", "other", "others", "our",
+    "said", "say", "says", "she", "should",
+    "so", "than", "that", "the", "their", "them", "then", "there", "these",
+    "they", "this", "those", "to", "us", "was", "we", "were", "what", "when",
+    "where", "which", "who", "why", "will", "with", "would", "you", "your",
+}
 
+# Small, explicit cross-language expansions complement rather than replace semantic search.
 QUERY_ALIASES = {
-    "name": ["ਨਾਮ", "ਨਾਮੁ"],
-    "naam": ["ਨਾਮ", "ਨਾਮੁ"],
-    "god": ["ਹਰਿ", "ਪ੍ਰਭੁ", "ਵਾਹਿਗੁਰੂ"],
-    "waheguru": ["ਵਾਹਿਗੁਰੂ"],
-    "peace": ["ਸੁਖ", "ਸਹਜ", "ਸ਼ਾਂਤਿ"],
-    "shanti": ["ਸ਼ਾਂਤਿ", "ਸੁਖ"],
-    "sukh": ["ਸੁਖ"],
-    "inner": ["ਮਨ"],
-    "mind": ["ਮਨ"],
-    "mann": ["ਮਨ"],
-    "man": ["ਮਨ"],
-    "ego": ["ਹਉਮੈ"],
-    "haumai": ["ਹਉਮੈ"],
-    "truth": ["ਸਚੁ", "ਸਤਿ"],
-    "sach": ["ਸਚੁ", "ਸਤਿ"],
-    "hukam": ["ਹੁਕਮ", "ਹੁਕਮਿ", "ਹੁਕਮੇ"],
-    "command": ["ਹੁਕਮ", "ਹੁਕਮਿ"],
-    "service": ["ਸੇਵਾ"],
-    "seva": ["ਸੇਵਾ"],
+    "name": ["naam", "ਨਾਮ", "ਨਾਮੁ"],
+    "naam": ["name", "ਨਾਮ", "ਨਾਮੁ"],
+    "god": ["lord", "divine", "creator", "ਹਰਿ", "ਪ੍ਰਭੁ"],
+    "waheguru": ["god", "ਵਾਹਿਗੁਰੂ"],
+    "peace": ["peaceful", "ਸੁਖ", "ਸਹਜ", "ਸ਼ਾਂਤਿ"],
+    "mind": ["inner", "ਮਨ"],
+    "ego": ["pride", "haumai", "ਹਉਮੈ"],
+    "haumai": ["ego", "pride", "ਹਉਮੈ"],
+    "truth": ["true", "sach", "ਸਚੁ", "ਸਤਿ"],
+    "sach": ["truth", "ਸਚੁ", "ਸਤਿ"],
+    "hukam": ["command", "will", "ਹੁਕਮ", "ਹੁਕਮਿ", "ਹੁਕਮੇ"],
+    "service": ["serve", "serving", "seva", "ਸੇਵਾ"],
+    "serve": ["service", "seva", "ਸੇਵਾ"],
+    "serving": ["service", "serve", "seva", "ਸੇਵਾ"],
+    "seva": ["service", "serve", "ਸੇਵਾ"],
     "guru": ["ਗੁਰੁ", "ਸਤਿਗੁਰੁ"],
-    "fear": ["ਨਿਰਭਉ"],
-    "love": ["ਪ੍ਰੇਮ", "ਪਿਆਰ"],
-    "prem": ["ਪ੍ਰੇਮ"],
-    "remember": ["ਸਿਮਰਿ", "ਸਿਮਰਨ"],
-    "meditate": ["ਸਿਮਰਿ", "ਧਿਆਇ"],
-    "meditation": ["ਸਿਮਰਨ", "ਧਿਆਨ"],
-    "simran": ["ਸਿਮਰਨ", "ਸਿਮਰਿ", "ਸਿਮਰਤ"],
-    "simar": ["ਸਿਮਰਿ", "ਸਿਮਰਨ"],
-    "grace": ["ਕਿਰਪਾ", "ਨਦਰਿ"],
-    "kirpa": ["ਕਿਰਪਾ"],
-    "death": ["ਮਰਣ", "ਮਰੈ"],
-    "life": ["ਜੀਵਨ", "ਜੀਉ"],
-    "soul": ["ਆਤਮ", "ਜੀਉ"],
+    "fear": ["afraid", "fearless", "ਨਿਰਭਉ"],
+    "love": ["loving", "ਪ੍ਰੇਮ", "ਪਿਆਰ"],
+    "prem": ["love", "ਪ੍ਰੇਮ"],
+    "remember": ["remembrance", "simran", "ਸਿਮਰਿ", "ਸਿਮਰਨ"],
+    "meditate": ["meditation", "simran", "ਸਿਮਰਿ", "ਧਿਆਇ"],
+    "meditation": ["meditate", "simran", "ਸਿਮਰਨ", "ਧਿਆਨ"],
+    "simran": ["remember", "meditate", "ਸਿਮਰਨ", "ਸਿਮਰਿ", "ਸਿਮਰਤ"],
+    "grace": ["mercy", "kirpa", "ਕਿਰਪਾ", "ਨਦਰਿ"],
+    "death": ["die", "dying", "ਮਰਣ", "ਮਰੈ"],
+    "life": ["living", "ਜੀਵਨ", "ਜੀਉ"],
+    "soul": ["spirit", "ਆਤਮ", "ਜੀਉ"],
 }
 
 
@@ -59,135 +65,367 @@ def _normalize_text(text: Any) -> str:
     return " ".join(TOKEN_SPLIT_RE.split(str(text).lower())).strip()
 
 
-def _token_set(text: str) -> set[str]:
-    normalized = _normalize_text(text)
-    if not normalized:
-        return set()
-    return {tok for tok in normalized.split(" ") if tok}
+def _tokens(text: str, remove_stopwords: bool = False) -> list[str]:
+    values = [token for token in _normalize_text(text).split() if token]
+    if remove_stopwords:
+        meaningful = [token for token in values if token not in ENGLISH_STOPWORDS]
+        return meaningful or values
+    return values
 
 
-def _query_variants(query: str) -> list[str]:
-    """Return independent query forms so Latin text does not dilute Gurmukhi matches."""
-    if GURMUKHI_RE.search(query):
-        return [query]
-    tokens = _token_set(query)
-    variants = [query]
-    for tok in tokens:
-        variants.extend(QUERY_ALIASES.get(tok, []))
-    return list(dict.fromkeys(variants))
+def _expanded_terms(query: str) -> list[str]:
+    terms = _tokens(query, remove_stopwords=not GURMUKHI_RE.search(query))
+    expanded = list(terms)
+    for term in terms:
+        expanded.extend(QUERY_ALIASES.get(term, []))
+    return list(dict.fromkeys(term for term in expanded if term))
 
 
-def _char_ngrams(text: str, n: int = 3) -> dict[str, int]:
-    normalized = _normalize_text(text).replace(" ", "")
-    if not normalized:
-        return {}
-    if len(normalized) < n:
-        return {normalized: 1}
-    out: dict[str, int] = {}
-    for i in range(len(normalized) - n + 1):
-        gram = normalized[i : i + n]
-        out[gram] = out.get(gram, 0) + 1
-    return out
-
-
-def _cosine_sim(left: dict[str, int], right: dict[str, int]) -> float:
-    if not left or not right:
-        return 0.0
-    dot = sum(left[k] * right.get(k, 0) for k in left)
-    left_norm = math.sqrt(sum(v * v for v in left.values()))
-    right_norm = math.sqrt(sum(v * v for v in right.values()))
-    if left_norm == 0 or right_norm == 0:
-        return 0.0
-    return dot / (left_norm * right_norm)
-
-
-def _jaccard(left: set[str], right: set[str]) -> float:
-    if not left or not right:
-        return 0.0
-    union = left | right
-    if not union:
-        return 0.0
-    return len(left & right) / len(union)
+def _fts_term(term: str) -> str:
+    return '"' + term.replace('"', '""') + '"'
 
 
 class CorpusRetriever:
-    """
-    Lightweight corpus-backed retriever.
-    Scoring is hybrid lexical + character n-gram similarity for MVP.
-    """
+    """Shabad-level BM25 + optional embedding retrieval with RRF fusion."""
 
-    def __init__(self, corpus_path: Optional[str] = None):
+    INDEX_VERSION = "2"
+    RRF_K = 60
+
+    def __init__(
+        self,
+        corpus_path: Optional[str] = None,
+        index_path: Optional[str] = None,
+    ):
         root = Path(__file__).resolve().parents[2]
-        default = root / "data" / "sggs.jsonl"
-        self.corpus_path = Path(corpus_path or os.getenv("CORPUS_PATH") or default)
+        self.corpus_path = Path(
+            corpus_path or os.getenv("CORPUS_PATH") or root / "data" / "sggs.jsonl"
+        )
+        self.index_path = Path(
+            index_path or os.getenv("SEARCH_INDEX_PATH") or root / "data" / "search.sqlite"
+        )
         self.records = self._load_records()
-        self.documents = [self._index_record(row) for row in self.records]
         self.records_by_id = {row.get("verse_id"): row for row in self.records}
         self.shabads: dict[str, list[dict[str, Any]]] = {}
         for row in self.records:
-            shabad_id = (row.get("context") or {}).get("shabad_id")
+            shabad_id = str((row.get("context") or {}).get("shabad_id") or "")
             if shabad_id:
                 self.shabads.setdefault(shabad_id, []).append(row)
-
-    @staticmethod
-    def _index_record(row: dict[str, Any]) -> dict[str, Any]:
-        fields = {
-            "gurmukhi": row.get("gurmukhi", ""),
-            "transliteration": row.get("transliteration", ""),
-            "translation": row.get("translation", ""),
-        }
-        if not fields["translation"]:
-            fields["translations"] = " ".join(
-                t.get("text", "")
-                for t in (row.get("translations") or [])
-                if isinstance(t, dict) and t.get("text")
-            )
-        return {
-            "row": row,
-            "fields": fields,
-            "tokens": {name: _token_set(content) for name, content in fields.items()},
-            "grams": {name: _char_ngrams(content) for name, content in fields.items()},
-            "normalized": [_normalize_text(value) for value in fields.values() if value],
-        }
+        self._index_lock = threading.Lock()
+        self._ensure_index()
+        self._embedding_ids: list[str] = []
+        self._embedding_matrix: Any = None
+        self._query_embedding_cache: dict[str, Any] = {}
+        self._load_embeddings()
 
     def _load_records(self) -> list[dict[str, Any]]:
         if not self.corpus_path.exists():
             return []
         records: list[dict[str, Any]] = []
-        with self.corpus_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
+        with self.corpus_path.open("r", encoding="utf-8") as source:
+            for line in source:
                 try:
-                    row = json.loads(line)
-                    records.append(row)
+                    records.append(json.loads(line))
                 except json.JSONDecodeError:
                     continue
         return records
 
-    def _passes_filters(self, row: dict[str, Any], filters: dict[str, str]) -> bool:
-        if not filters:
-            return True
+    def _connect(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(self.index_path, timeout=30)
+        connection.row_factory = sqlite3.Row
+        return connection
 
-        citation = row.get("citation", {})
+    def _index_is_current(self, connection: sqlite3.Connection) -> bool:
+        try:
+            values = dict(connection.execute("SELECT key, value FROM index_meta"))
+            stat = self.corpus_path.stat()
+            return (
+                values.get("version") == self.INDEX_VERSION
+                and values.get("corpus_size") == str(stat.st_size)
+                and values.get("corpus_mtime_ns") == str(stat.st_mtime_ns)
+                and values.get("shabad_count") == str(len(self.shabads))
+            )
+        except sqlite3.Error:
+            return False
+
+    def _ensure_index(self) -> None:
+        self.index_path.parent.mkdir(parents=True, exist_ok=True)
+        with self._index_lock:
+            connection = self._connect()
+            if self._index_is_current(connection):
+                connection.close()
+                return
+            connection.executescript(
+                """
+                DROP TABLE IF EXISTS shabad_fts;
+                DROP TABLE IF EXISTS shabad_meta;
+                DROP TABLE IF EXISTS embeddings;
+                DROP TABLE IF EXISTS index_meta;
+                CREATE TABLE index_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                CREATE TABLE shabad_meta (
+                    shabad_id TEXT PRIMARY KEY,
+                    author TEXT,
+                    raag TEXT,
+                    first_ang INTEGER
+                );
+                CREATE VIRTUAL TABLE shabad_fts USING fts5(
+                    shabad_id UNINDEXED,
+                    translation,
+                    transliteration,
+                    gurmukhi,
+                    tokenize='unicode61 remove_diacritics 0'
+                );
+                CREATE TABLE embeddings (
+                    shabad_id TEXT PRIMARY KEY,
+                    model TEXT NOT NULL,
+                    dimensions INTEGER NOT NULL,
+                    vector BLOB NOT NULL
+                );
+                """
+            )
+            fts_rows = []
+            meta_rows = []
+            for shabad_id, rows in self.shabads.items():
+                citation = rows[0].get("citation") or {}
+                fts_rows.append(
+                    (
+                        shabad_id,
+                        "\n".join(str(row.get("translation") or "") for row in rows),
+                        "\n".join(str(row.get("transliteration") or "") for row in rows),
+                        "\n".join(str(row.get("gurmukhi") or "") for row in rows),
+                    )
+                )
+                meta_rows.append(
+                    (
+                        shabad_id,
+                        citation.get("author"),
+                        citation.get("raag"),
+                        citation.get("ang"),
+                    )
+                )
+            connection.executemany(
+                "INSERT INTO shabad_fts VALUES (?, ?, ?, ?)", fts_rows
+            )
+            connection.executemany(
+                "INSERT INTO shabad_meta VALUES (?, ?, ?, ?)", meta_rows
+            )
+            stat = self.corpus_path.stat()
+            connection.executemany(
+                "INSERT INTO index_meta VALUES (?, ?)",
+                [
+                    ("version", self.INDEX_VERSION),
+                    ("corpus_size", str(stat.st_size)),
+                    ("corpus_mtime_ns", str(stat.st_mtime_ns)),
+                    ("shabad_count", str(len(self.shabads))),
+                ],
+            )
+            connection.commit()
+            connection.close()
+
+    def _load_embeddings(self) -> None:
+        try:
+            import numpy as np
+        except ImportError:
+            return
+        connection = self._connect()
+        rows = connection.execute(
+            "SELECT shabad_id, dimensions, vector FROM embeddings ORDER BY shabad_id"
+        ).fetchall()
+        connection.close()
+        if not rows:
+            return
+        dimensions = int(rows[0]["dimensions"])
+        valid_rows = [
+            row for row in rows
+            if int(row["dimensions"]) == dimensions
+            and len(row["vector"]) == dimensions * 4
+        ]
+        if not valid_rows:
+            return
+        self._embedding_ids = [str(row["shabad_id"]) for row in valid_rows]
+        self._embedding_matrix = np.vstack(
+            [np.frombuffer(row["vector"], dtype=np.float32) for row in valid_rows]
+        )
+
+    @property
+    def semantic_search_available(self) -> bool:
+        return self._embedding_matrix is not None and bool(os.getenv("OPENAI_API_KEY"))
+
+    @staticmethod
+    def _embedding_text(rows: list[dict[str, Any]]) -> str:
+        first = rows[0]
+        citation = first.get("citation") or {}
+        text = "\n".join(
+            [
+                f"Author: {citation.get('author') or ''}",
+                f"Raag or section: {citation.get('raag') or ''}",
+                "English translation:",
+                *[str(row.get("translation") or "") for row in rows],
+                "Gurmukhi:",
+                *[str(row.get("gurmukhi") or "") for row in rows],
+            ]
+        )
+        # The longest SGGS compositions exceed the embedding endpoint's 8,192
+        # token input limit. Preserve balanced context from both ends.
+        # Gurmukhi can tokenize more densely than English, so use a conservative
+        # character ceiling without adding another tokenizer dependency.
+        max_chars = 5_000
+        if len(text) > max_chars:
+            half = max_chars // 2
+            text = text[:half] + "\n[...middle omitted...]\n" + text[-half:]
+        return text
+
+    def build_embeddings(
+        self,
+        model: str = "text-embedding-3-small",
+        dimensions: int = 768,
+        batch_size: int = 32,
+    ) -> int:
+        """Build missing persistent Shabad embeddings. Returns rows added."""
+        from openai import OpenAI
+        import numpy as np
+
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("Set OPENAI_API_KEY before building embeddings.")
+        connection = self._connect()
+        existing = {
+            str(row[0])
+            for row in connection.execute(
+                "SELECT shabad_id FROM embeddings WHERE model=? AND dimensions=?",
+                (model, dimensions),
+            )
+        }
+        pending = [
+            (shabad_id, self._embedding_text(rows))
+            for shabad_id, rows in self.shabads.items()
+            if shabad_id not in existing
+        ]
+        client = OpenAI(api_key=api_key)
+        added = 0
+        for start in range(0, len(pending), batch_size):
+            batch = pending[start : start + batch_size]
+            response = client.embeddings.create(
+                model=model,
+                dimensions=dimensions,
+                input=[text for _, text in batch],
+                encoding_format="float",
+            )
+            db_rows = []
+            for (shabad_id, _), item in zip(batch, response.data):
+                vector = np.asarray(item.embedding, dtype=np.float32)
+                norm = float(np.linalg.norm(vector))
+                if norm:
+                    vector /= norm
+                db_rows.append(
+                    (shabad_id, model, dimensions, vector.tobytes())
+                )
+            connection.executemany(
+                """
+                INSERT OR REPLACE INTO embeddings
+                (shabad_id, model, dimensions, vector) VALUES (?, ?, ?, ?)
+                """,
+                db_rows,
+            )
+            connection.commit()
+            added += len(db_rows)
+            print(f"Embedded {added}/{len(pending)} Shabads", flush=True)
+        connection.close()
+        self._load_embeddings()
+        return added
+
+    def _passes_filters(self, row: dict[str, Any], filters: dict[str, str]) -> bool:
+        citation = row.get("citation") or {}
         for key, value in filters.items():
-            if value is None:
-                continue
-            wanted = str(value).strip().lower()
+            wanted = str(value or "").strip().lower()
             if not wanted:
                 continue
-            if key == "ang":
-                if str(citation.get("ang", "")).lower() != wanted:
-                    return False
-                continue
-            if key in {"raag", "author"}:
-                if str(citation.get(key, "")).strip().lower() != wanted:
-                    return False
-                continue
-            if str(row.get(key, "")).strip().lower() != wanted:
+            actual = citation.get(key) if key in {"ang", "raag", "author"} else row.get(key)
+            if str(actual or "").strip().lower() != wanted:
                 return False
         return True
+
+    def _lexical_ranking(
+        self, query: str, filters: dict[str, str], limit: int = 80
+    ) -> list[tuple[str, float]]:
+        terms = _expanded_terms(query)
+        if not terms:
+            return []
+        match = " OR ".join(_fts_term(term) for term in terms)
+        where = ["shabad_fts MATCH ?"]
+        params: list[Any] = [match]
+        for key, column in (("author", "author"), ("raag", "raag"), ("ang", "first_ang")):
+            value = str(filters.get(key, "")).strip()
+            if value:
+                where.append(f"LOWER(CAST(m.{column} AS TEXT)) = LOWER(?)")
+                params.append(value)
+        params.append(limit)
+        connection = self._connect()
+        rows = connection.execute(
+            f"""
+            SELECT f.shabad_id, bm25(shabad_fts, 0.0, 4.0, 2.0, 2.5) AS score
+            FROM shabad_fts f
+            JOIN shabad_meta m ON m.shabad_id = f.shabad_id
+            WHERE {' AND '.join(where)}
+            ORDER BY score
+            LIMIT ?
+            """,
+            params,
+        ).fetchall()
+        connection.close()
+        return [(str(row["shabad_id"]), float(-row["score"])) for row in rows]
+
+    def _semantic_ranking(self, query: str, limit: int = 80) -> list[tuple[str, float]]:
+        if not self.semantic_search_available:
+            return []
+        import numpy as np
+        from openai import OpenAI
+
+        cache_key = _normalize_text(query)
+        query_vector = self._query_embedding_cache.get(cache_key)
+        if query_vector is None:
+            try:
+                model = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+                dimensions = int(self._embedding_matrix.shape[1])
+                response = OpenAI(api_key=os.environ["OPENAI_API_KEY"]).embeddings.create(
+                    model=model,
+                    dimensions=dimensions,
+                    input=query.strip(),
+                    encoding_format="float",
+                )
+                query_vector = np.asarray(response.data[0].embedding, dtype=np.float32)
+                norm = float(np.linalg.norm(query_vector))
+                if norm:
+                    query_vector /= norm
+                if len(self._query_embedding_cache) >= 256:
+                    self._query_embedding_cache.pop(next(iter(self._query_embedding_cache)))
+                self._query_embedding_cache[cache_key] = query_vector
+            except Exception:
+                # Search remains available through local BM25 during API/network issues.
+                return []
+        similarities = np.einsum("ij,j->i", self._embedding_matrix, query_vector)
+        count = min(limit, len(similarities))
+        indices = np.argpartition(-similarities, count - 1)[:count]
+        indices = indices[np.argsort(-similarities[indices])]
+        return [
+            (self._embedding_ids[int(index)], float(similarities[int(index)]))
+            for index in indices
+        ]
+
+    def _choose_line(self, shabad_id: str, query: str) -> dict[str, Any]:
+        rows = self.shabads[shabad_id]
+        query_terms = set(_expanded_terms(query))
+
+        def score(row: dict[str, Any]) -> tuple[float, int]:
+            text = " ".join(
+                str(row.get(field) or "")
+                for field in ("translation", "transliteration", "gurmukhi")
+            )
+            line_terms = set(_tokens(text))
+            overlap = len(query_terms & line_terms) / max(1, len(query_terms))
+            substantive = min(len(_tokens(str(row.get("gurmukhi") or ""))), 12) / 12
+            return overlap + 0.08 * substantive, len(line_terms)
+
+        return max(rows, key=score)
 
     @staticmethod
     def _to_result(
@@ -197,7 +435,7 @@ class CorpusRetriever:
         dense_score: Optional[float] = None,
         rerank_score: Optional[float] = None,
     ) -> SearchResult:
-        citation = row.get("citation", {})
+        citation = row.get("citation") or {}
         context = row.get("context")
         return SearchResult(
             verse_id=row.get("verse_id", ""),
@@ -206,12 +444,12 @@ class CorpusRetriever:
             translation=row.get("translation"),
             translations=[
                 TranslationItem(
-                    lang=str(t.get("lang", "unknown")),
-                    text=str(t.get("text", "")),
-                    translator=t.get("translator"),
+                    lang=str(item.get("lang", "unknown")),
+                    text=str(item.get("text", "")),
+                    translator=item.get("translator"),
                 )
-                for t in (row.get("translations") or [])
-                if isinstance(t, dict) and t.get("text")
+                for item in (row.get("translations") or [])
+                if isinstance(item, dict) and item.get("text")
             ],
             context=VerseContext(**context) if context else None,
             citation=VerseCitation(
@@ -232,84 +470,52 @@ class CorpusRetriever:
         selected = self.records_by_id.get(verse_id)
         if not selected:
             return []
-        shabad_id = (selected.get("context") or {}).get("shabad_id")
-        rows = self.shabads.get(shabad_id, [selected])
+        shabad_id = str((selected.get("context") or {}).get("shabad_id") or "")
         return [
             self._to_result(row, "Part of the same Shabad passage.")
-            for row in rows
-            if row.get("citation", {}).get("source_id")
+            for row in self.shabads.get(shabad_id, [selected])
+            if (row.get("citation") or {}).get("source_id")
         ]
 
     def search(self, request: SearchRequest) -> list[SearchResult]:
-        query_variants = _query_variants(request.query.strip())
-        query_features = [
-            (_token_set(query), _char_ngrams(query), _normalize_text(query))
-            for query in query_variants
-        ]
+        query = request.query.strip()
+        lexical = self._lexical_ranking(query, request.filters)
+        semantic = self._semantic_ranking(query)
+        lexical_scores = dict(lexical)
+        semantic_scores = dict(semantic)
 
-        scored: list[tuple[float, float, float, dict[str, Any], str]] = []
-        for document in self.documents:
-            row = document["row"]
-            if not self._passes_filters(row, request.filters):
-                continue
-
-            fields = document["fields"]
-
-            lexical_scores: dict[str, float] = {}
-            dense_scores: dict[str, float] = {}
-            for name, content in fields.items():
-                lexical_scores[name] = max(
-                    _jaccard(tokens, document["tokens"][name])
-                    for tokens, _, _ in query_features
-                )
-                dense_scores[name] = max(
-                    _cosine_sim(grams, document["grams"][name])
-                    for _, grams, _ in query_features
-                )
-
-            sparse_score = max(lexical_scores.values())
-            dense_score = max(dense_scores.values())
-            rerank_score = 0.45 * sparse_score + 0.55 * dense_score
-
-            gurmukhi_tokens = document["tokens"]["gurmukhi"]
-            exact_match = any(
-                variant and variant in field
-                for _, _, variant in query_features
-                for field in document["normalized"]
-            )
-            # Prefer a useful verse line over a heading or isolated one-word fragment.
-            if len(gurmukhi_tokens) >= 4:
-                rerank_score *= 1.08
-            else:
-                rerank_score *= 0.25
-            if exact_match and len(gurmukhi_tokens) >= 4:
-                rerank_score += 0.08
-            rerank_score = min(rerank_score, 1.0)
-
-            best_field = max(
-                fields,
-                key=lambda f: (lexical_scores[f], dense_scores[f]),
-            )
-            explanation = f"Best similarity against {best_field} field."
-
-            if rerank_score > 0:
-                scored.append((rerank_score, sparse_score, dense_score, row, explanation))
-
-        scored.sort(key=lambda x: x[0], reverse=True)
-        top_hits = scored[: request.top_k]
+        # RRF combines ranks rather than incomparable BM25 and cosine score scales.
+        fused: dict[str, float] = {}
+        for ranking in (lexical, semantic):
+            for rank, (shabad_id, _) in enumerate(ranking, start=1):
+                fused[shabad_id] = fused.get(shabad_id, 0.0) + 1 / (self.RRF_K + rank)
+        ranked = sorted(fused, key=fused.get, reverse=True)
 
         results: list[SearchResult] = []
-        for rerank_score, sparse_score, dense_score, row, explanation in top_hits:
-            citation = row.get("citation", {})
+        for shabad_id in ranked:
+            row = self._choose_line(shabad_id, query)
+            if not self._passes_filters(row, request.filters):
+                continue
+            citation = row.get("citation") or {}
             if not citation.get("source_id") or not citation.get("ang"):
                 continue
+            has_lexical = shabad_id in lexical_scores
+            has_semantic = shabad_id in semantic_scores
+            if has_lexical and has_semantic:
+                explanation = "Found by both keyword and semantic Shabad search."
+            elif has_semantic:
+                explanation = "Found by semantic similarity to the full Shabad."
+            else:
+                explanation = "Found by BM25 keyword relevance across the full Shabad."
             results.append(
                 self._to_result(
                     row,
                     explanation,
-                    sparse_score,
-                    dense_score,
-                    rerank_score,
+                    lexical_scores.get(shabad_id),
+                    semantic_scores.get(shabad_id),
+                    fused[shabad_id],
                 )
             )
+            if len(results) >= request.top_k:
+                break
         return results
