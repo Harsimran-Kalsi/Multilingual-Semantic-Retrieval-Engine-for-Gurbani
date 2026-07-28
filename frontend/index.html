@@ -204,6 +204,9 @@
         #fffdf8;
       box-shadow: 0 32px 90px rgba(5, 14, 24, 0.4);
       transform-origin: center;
+    }
+
+    .focus-panel.animating {
       animation: cardFocus 520ms cubic-bezier(.18, .82, .22, 1) both;
     }
 
@@ -379,6 +382,7 @@
     const topK = document.getElementById("topK");
     const resultsEl = document.getElementById("results");
     const focusOverlay = document.getElementById("focusOverlay");
+    const focusPanel = document.getElementById("focusPanel");
     const focusContent = document.getElementById("focusContent");
     const focusClose = document.getElementById("focusClose");
     let lastFocusedCard = null;
@@ -441,7 +445,11 @@
       if (!verseId) return;
       lastFocusedCard = card;
       focusContent.innerHTML = '<div class="empty">Opening the full Shabad…</div>';
+      focusPanel.classList.remove("animating");
       focusOverlay.classList.add("open");
+      // Force a fresh animation timeline even though the same modal element is reused.
+      void focusPanel.offsetWidth;
+      focusPanel.classList.add("animating");
       document.body.classList.add("modal-open");
       focusClose.focus();
 
@@ -486,6 +494,7 @@
 
     function closePassage() {
       focusOverlay.classList.remove("open");
+      focusPanel.classList.remove("animating");
       document.body.classList.remove("modal-open");
       focusContent.innerHTML = "";
       if (lastFocusedCard) lastFocusedCard.focus();
