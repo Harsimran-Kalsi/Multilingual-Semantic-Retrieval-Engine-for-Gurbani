@@ -9,6 +9,12 @@ class TranslationItem(BaseModel):
     translator: Optional[str] = None
 
 
+class VerseContext(BaseModel):
+    shabad_id: str
+    line_type: Optional[str] = None
+    section_description: Optional[str] = None
+
+
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, description="User query in English, Roman Punjabi, or Gurmukhi")
     top_k: int = Field(default=5, ge=1, le=20)
@@ -31,6 +37,7 @@ class SearchResult(BaseModel):
     transliteration: Optional[str] = None
     translation: Optional[str] = None
     translations: list[TranslationItem] = Field(default_factory=list)
+    context: Optional[VerseContext] = None
     citation: VerseCitation
     sparse_score: Optional[float] = None
     dense_score: Optional[float] = None
@@ -42,3 +49,8 @@ class SearchResponse(BaseModel):
     query: str
     normalized_query: str
     results: list[SearchResult]
+
+
+class PassageResponse(BaseModel):
+    selected_verse_id: str
+    lines: list[SearchResult]

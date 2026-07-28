@@ -56,6 +56,31 @@
         "additionalProperties": false
       }
     },
+    "context": {
+      "type": "object",
+      "required": [
+        "shabad_id"
+      ],
+      "properties": {
+        "shabad_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "section_description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "citation": {
       "type": "object",
       "required": [

@@ -3,7 +3,7 @@ import argparse
 import json
 from pathlib import Path
 
-from jsonschema import validate
+from jsonschema.validators import validator_for
 
 
 def load_json(path: Path) -> dict:
@@ -12,6 +12,9 @@ def load_json(path: Path) -> dict:
 
 def validate_records(input_path: Path, schema_path: Path) -> tuple[int, int]:
     schema = load_json(schema_path)
+    validator_class = validator_for(schema)
+    validator_class.check_schema(schema)
+    validator = validator_class(schema)
     total = 0
     invalid = 0
 
@@ -23,7 +26,7 @@ def validate_records(input_path: Path, schema_path: Path) -> tuple[int, int]:
             total += 1
             try:
                 record = json.loads(line)
-                validate(instance=record, schema=schema)
+                validator.validate(record)
             except Exception:
                 invalid += 1
 

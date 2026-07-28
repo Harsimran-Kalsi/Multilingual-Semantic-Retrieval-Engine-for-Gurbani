@@ -23,6 +23,16 @@ class RetrievalSmokeTests(unittest.TestCase):
         self.assertTrue(results)
         self.assertTrue(any("ਸਿਮਰ" in result.gurmukhi for result in results))
 
+    def test_passage_returns_complete_shabad_context(self) -> None:
+        results = self.search("truth")
+        passage = self.retriever.passage(results[0].verse_id)
+        self.assertTrue(passage)
+        self.assertTrue(all(line.context is not None for line in passage))
+        self.assertEqual(
+            {line.context.shabad_id for line in passage},
+            {results[0].context.shabad_id},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

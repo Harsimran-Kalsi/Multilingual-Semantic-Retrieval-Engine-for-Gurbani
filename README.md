@@ -7,6 +7,7 @@ Punjabi terms, or a practical set of English concepts.
 
 - FastAPI backend with `/search` and `/health`
 - Web UI at `/`
+- Clickable result cards with animated full-Shabad reading context
 - Corpus-backed retrieval across 60,555 SGGS lines
 - Unicode Gurmukhi, Roman transliteration, English translation, Ang, writer,
   section/Raag, and stable Shabad OS line IDs

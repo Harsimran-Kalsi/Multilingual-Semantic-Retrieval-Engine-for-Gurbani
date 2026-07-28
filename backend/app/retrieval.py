@@ -5,7 +5,13 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
-from backend.app.schemas import SearchRequest, SearchResult, TranslationItem, VerseCitation
+from backend.app.schemas import (
+    SearchRequest,
+    SearchResult,
+    TranslationItem,
+    VerseCitation,
+    VerseContext,
+)
 
 TOKEN_SPLIT_RE = re.compile(r"[^\w\u0A00-\u0A7F]+", flags=re.UNICODE)
 GURMUKHI_RE = re.compile(r"[\u0A00-\u0A7F]")
@@ -116,6 +122,12 @@ class CorpusRetriever:
         self.corpus_path = Path(corpus_path or os.getenv("CORPUS_PATH") or default)
         self.records = self._load_records()
         self.documents = [self._index_record(row) for row in self.records]
+        self.records_by_id = {row.get("verse_id"): row for row in self.records}
+        self.shabads: dict[str, list[dict[str, Any]]] = {}
+        for row in self.records:
+            shabad_id = (row.get("context") or {}).get("shabad_id")
+            if shabad_id:
+                self.shabads.setdefault(shabad_id, []).append(row)
 
     @staticmethod
     def _index_record(row: dict[str, Any]) -> dict[str, Any]:
@@ -176,6 +188,57 @@ class CorpusRetriever:
             if str(row.get(key, "")).strip().lower() != wanted:
                 return False
         return True
+
+    @staticmethod
+    def _to_result(
+        row: dict[str, Any],
+        explanation: str,
+        sparse_score: Optional[float] = None,
+        dense_score: Optional[float] = None,
+        rerank_score: Optional[float] = None,
+    ) -> SearchResult:
+        citation = row.get("citation", {})
+        context = row.get("context")
+        return SearchResult(
+            verse_id=row.get("verse_id", ""),
+            gurmukhi=row.get("gurmukhi", ""),
+            transliteration=row.get("transliteration"),
+            translation=row.get("translation"),
+            translations=[
+                TranslationItem(
+                    lang=str(t.get("lang", "unknown")),
+                    text=str(t.get("text", "")),
+                    translator=t.get("translator"),
+                )
+                for t in (row.get("translations") or [])
+                if isinstance(t, dict) and t.get("text")
+            ],
+            context=VerseContext(**context) if context else None,
+            citation=VerseCitation(
+                ang=int(citation["ang"]),
+                raag=citation.get("raag"),
+                author=citation.get("author"),
+                source_id=citation["source_id"],
+                line_start=citation.get("line_start"),
+                line_end=citation.get("line_end"),
+            ),
+            sparse_score=round(sparse_score, 4) if sparse_score is not None else None,
+            dense_score=round(dense_score, 4) if dense_score is not None else None,
+            rerank_score=round(rerank_score, 4) if rerank_score is not None else None,
+            match_explanation=explanation,
+        )
+
+    def passage(self, verse_id: str) -> list[SearchResult]:
+        selected = self.records_by_id.get(verse_id)
+        if not selected:
+            return []
+        shabad_id = (selected.get("context") or {}).get("shabad_id")
+        rows = self.shabads.get(shabad_id, [selected])
+        return [
+            self._to_result(row, "Part of the same Shabad passage.")
+            for row in rows
+            if row.get("citation", {}).get("source_id")
+        ]
 
     def search(self, request: SearchRequest) -> list[SearchResult]:
         query_variants = _query_variants(request.query.strip())
@@ -241,32 +304,12 @@ class CorpusRetriever:
             if not citation.get("source_id") or not citation.get("ang"):
                 continue
             results.append(
-                SearchResult(
-                    verse_id=row.get("verse_id", ""),
-                    gurmukhi=row.get("gurmukhi", ""),
-                    transliteration=row.get("transliteration"),
-                    translation=row.get("translation"),
-                    translations=[
-                        TranslationItem(
-                            lang=str(t.get("lang", "unknown")),
-                            text=str(t.get("text", "")),
-                            translator=t.get("translator"),
-                        )
-                        for t in (row.get("translations") or [])
-                        if isinstance(t, dict) and t.get("text")
-                    ],
-                    citation=VerseCitation(
-                        ang=int(citation["ang"]),
-                        raag=citation.get("raag"),
-                        author=citation.get("author"),
-                        source_id=citation["source_id"],
-                        line_start=citation.get("line_start"),
-                        line_end=citation.get("line_end"),
-                    ),
-                    sparse_score=round(sparse_score, 4),
-                    dense_score=round(dense_score, 4),
-                    rerank_score=round(rerank_score, 4),
-                    match_explanation=explanation,
+                self._to_result(
+                    row,
+                    explanation,
+                    sparse_score,
+                    dense_score,
+                    rerank_score,
                 )
             )
         return results

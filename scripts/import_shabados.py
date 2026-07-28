@@ -49,15 +49,20 @@ SELECT
     l.source_page,
     l.source_line,
     l.gurmukhi,
+    l.type_id,
     tr.transliteration,
     tx.translation,
     ts.name_english AS translator,
     w.name_english AS author,
-    sec.name_english AS section
+    sec.name_english AS section,
+    sec.description AS section_description,
+    lt.name_english AS line_type,
+    sh.id AS shabad_id
 FROM lines l
 JOIN shabads sh ON sh.id = l.shabad_id
 JOIN writers w ON w.id = sh.writer_id
 JOIN sections sec ON sec.id = sh.section_id
+LEFT JOIN line_types lt ON lt.id = l.type_id
 LEFT JOIN transliterations tr
     ON tr.line_id = l.id AND tr.language_id = 1
 LEFT JOIN translations tx
@@ -91,6 +96,11 @@ def export(database: Path, output: Path, release: str) -> int:
                 "transliteration": row["transliteration"],
                 "translation": row["translation"],
                 "translations": translations,
+                "context": {
+                    "shabad_id": row["shabad_id"],
+                    "line_type": row["line_type"],
+                    "section_description": row["section_description"],
+                },
                 "citation": {
                     "source_id": f"shabados:{release}:line:{row['id']}",
                     "ang": row["source_page"],

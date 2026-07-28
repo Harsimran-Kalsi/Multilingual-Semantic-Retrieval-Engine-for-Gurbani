@@ -122,6 +122,25 @@
       background: rgba(255, 255, 255, 0.92);
       padding: 16px;
       animation: fadeIn 340ms ease both;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .card:hover,
+    .card:focus-visible {
+      transform: translateY(-4px) scale(1.008);
+      box-shadow: 0 18px 34px rgba(20, 35, 52, 0.16);
+      border-color: rgba(178, 65, 46, 0.35);
+      outline: none;
+    }
+
+    .open-hint {
+      display: inline-flex;
+      margin-top: 12px;
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
     @keyframes fadeIn {
@@ -157,6 +176,148 @@
       color: var(--muted);
     }
 
+    .focus-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: clamp(12px, 4vw, 44px);
+      background: rgba(14, 23, 33, 0.64);
+      backdrop-filter: blur(12px);
+    }
+
+    .focus-overlay.open {
+      display: grid;
+      animation: veilIn 220ms ease both;
+    }
+
+    .focus-panel {
+      position: relative;
+      width: min(1040px, 100%);
+      max-height: calc(100vh - 28px);
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at top right, rgba(67, 114, 173, 0.13), transparent 36%),
+        #fffdf8;
+      box-shadow: 0 32px 90px rgba(5, 14, 24, 0.4);
+      transform-origin: center;
+      animation: cardFocus 520ms cubic-bezier(.18, .82, .22, 1) both;
+    }
+
+    @keyframes veilIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes cardFocus {
+      0% { opacity: 0; transform: perspective(1200px) rotateY(-16deg) translateY(40px) scale(.74); }
+      62% { opacity: 1; transform: perspective(1200px) rotateY(2deg) translateY(-5px) scale(1.015); }
+      100% { opacity: 1; transform: perspective(1200px) rotateY(0) translateY(0) scale(1); }
+    }
+
+    .focus-close {
+      position: sticky;
+      z-index: 2;
+      top: 16px;
+      float: right;
+      margin: 16px 16px 0 0;
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--ink);
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(20, 35, 52, 0.12);
+    }
+
+    .focus-content {
+      padding: clamp(24px, 5vw, 54px);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .focus-title {
+      margin: 0;
+      max-width: 880px;
+      font-family: "Raavi", "Noto Sans Gurmukhi", sans-serif;
+      font-size: clamp(1.45rem, 4vw, 2.35rem);
+      line-height: 1.55;
+    }
+
+    .context-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 28px 0;
+    }
+
+    .context-box {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(243, 236, 217, 0.48);
+    }
+
+    .context-box h3 {
+      margin: 0 0 7px;
+      font-size: 0.86rem;
+      color: var(--accent);
+    }
+
+    .context-box p {
+      margin: 0;
+      color: #344252;
+      line-height: 1.55;
+    }
+
+    .passage-heading {
+      margin: 32px 0 6px;
+      font-size: 1.08rem;
+    }
+
+    .passage-note {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .passage {
+      display: grid;
+      gap: 10px;
+    }
+
+    .passage-line {
+      padding: 14px 16px;
+      border-left: 3px solid transparent;
+      border-radius: 4px 14px 14px 4px;
+      background: rgba(214, 230, 242, 0.28);
+    }
+
+    .passage-line.selected {
+      border-left-color: var(--accent);
+      background: rgba(178, 65, 46, 0.08);
+    }
+
+    .passage-line .gurmukhi {
+      font-size: 1.08rem;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
     @media (max-width: 720px) {
       .search {
         grid-template-columns: 1fr;
@@ -164,6 +325,21 @@
 
       .search button {
         height: 44px;
+      }
+
+      .context-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .focus-content {
+        padding-top: 12px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 1ms !important;
+        transition-duration: 1ms !important;
       }
     }
   </style>
@@ -190,11 +366,32 @@
     </section>
   </main>
 
+  <div class="focus-overlay" id="focusOverlay" role="dialog" aria-modal="true" aria-labelledby="focusTitle">
+    <section class="focus-panel" id="focusPanel">
+      <button class="focus-close" id="focusClose" aria-label="Close passage">×</button>
+      <div class="focus-content" id="focusContent"></div>
+    </section>
+  </div>
+
   <script>
     const form = document.getElementById("searchForm");
     const queryInput = document.getElementById("queryInput");
     const topK = document.getElementById("topK");
     const resultsEl = document.getElementById("results");
+    const focusOverlay = document.getElementById("focusOverlay");
+    const focusContent = document.getElementById("focusContent");
+    const focusClose = document.getElementById("focusClose");
+    let lastFocusedCard = null;
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[char]);
+    }
 
     function score(value) {
       return typeof value === "number" ? value.toFixed(3) : "n/a";
@@ -207,29 +404,113 @@
       }
 
       resultsEl.innerHTML = payload.results.map((item, idx) => `
-        <article class="card" style="animation-delay:${idx * 70}ms">
-          <p class="gurmukhi">${item.gurmukhi}</p>
-          ${item.transliteration ? `<p class="line"><strong>Transliteration:</strong> ${item.transliteration}</p>` : ""}
+        <article class="card" tabindex="0" role="button" data-verse-id="${escapeHtml(item.verse_id)}"
+          aria-label="Open full passage for Ang ${item.citation.ang}" style="animation-delay:${idx * 70}ms">
+          <p class="gurmukhi">${escapeHtml(item.gurmukhi)}</p>
+          ${item.transliteration ? `<p class="line"><strong>Transliteration:</strong> ${escapeHtml(item.transliteration)}</p>` : ""}
           ${
             Array.isArray(item.translations) && item.translations.length
               ? item.translations.map((t) =>
-                  `<p class="line"><strong>Translation (${t.lang}${t.translator ? `, ${t.translator}` : ""}):</strong> ${t.text}</p>`
+                  `<p class="line"><strong>Translation (${escapeHtml(t.lang)}${t.translator ? `, ${escapeHtml(t.translator)}` : ""}):</strong> ${escapeHtml(t.text)}</p>`
                 ).join("")
-              : (item.translation ? `<p class="line"><strong>Translation:</strong> ${item.translation}</p>` : "")
+              : (item.translation ? `<p class="line"><strong>Translation:</strong> ${escapeHtml(item.translation)}</p>` : "")
           }
-          <p class="line"><strong>Why matched:</strong> ${item.match_explanation}</p>
+          <p class="line"><strong>Why matched:</strong> ${escapeHtml(item.match_explanation)}</p>
           <div class="meta">
             <span><strong>Ang:</strong> ${item.citation.ang}</span>
-            <span><strong>Raag:</strong> ${item.citation.raag || "n/a"}</span>
-            <span><strong>Author:</strong> ${item.citation.author || "n/a"}</span>
-            <span><strong>Source:</strong> ${item.citation.source_id}</span>
+            <span><strong>Raag:</strong> ${escapeHtml(item.citation.raag || "n/a")}</span>
+            <span><strong>Author:</strong> ${escapeHtml(item.citation.author || "n/a")}</span>
           </div>
           <div class="score">
             sparse=${score(item.sparse_score)} | dense=${score(item.dense_score)} | rerank=${score(item.rerank_score)}
           </div>
+          <span class="open-hint">Explore full passage →</span>
         </article>
       `).join("");
     }
+
+    const lineTypeNotes = {
+      Manglacharan: "An invocation or opening expression that establishes the sacred orientation of the composition.",
+      Sirlekh: "A heading that identifies the composition, musical setting, or authorship that follows.",
+      Rahao: "The pause or refrain line. It commonly acts as a thematic anchor for reading the surrounding Shabad.",
+      Pankti: "A standard poetic line within the Shabad's unfolding verse structure."
+    };
+
+    async function openPassage(card) {
+      const verseId = card.dataset.verseId;
+      if (!verseId) return;
+      lastFocusedCard = card;
+      focusContent.innerHTML = '<div class="empty">Opening the full Shabad…</div>';
+      focusOverlay.classList.add("open");
+      document.body.classList.add("modal-open");
+      focusClose.focus();
+
+      try {
+        const response = await fetch(`/passage/${encodeURIComponent(verseId)}`);
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        const payload = await response.json();
+        const selected = payload.lines.find((line) => line.verse_id === verseId) || payload.lines[0];
+        const context = selected.context || {};
+        const lineType = context.line_type || "Pankti";
+        const passageLines = payload.lines.map((line) => `
+          <div class="passage-line ${line.verse_id === verseId ? "selected" : ""}">
+            <p class="gurmukhi">${escapeHtml(line.gurmukhi)}</p>
+            ${line.transliteration ? `<p class="line">${escapeHtml(line.transliteration)}</p>` : ""}
+            ${line.translation ? `<p class="line">${escapeHtml(line.translation)}</p>` : ""}
+          </div>
+        `).join("");
+
+        focusContent.innerHTML = `
+          <p class="eyebrow">Ang ${selected.citation.ang} · ${escapeHtml(selected.citation.raag || "Sri Guru Granth Sahib Ji")}</p>
+          <h2 class="focus-title" id="focusTitle">${escapeHtml(selected.gurmukhi)}</h2>
+          ${selected.transliteration ? `<p class="line"><strong>Transliteration:</strong> ${escapeHtml(selected.transliteration)}</p>` : ""}
+          ${selected.translation ? `<p class="line"><strong>Translation:</strong> ${escapeHtml(selected.translation)}</p>` : ""}
+          <div class="context-grid">
+            <div class="context-box">
+              <h3>Setting and voice</h3>
+              <p><strong>${escapeHtml(selected.citation.author || "Unknown writer")}</strong> · ${escapeHtml(selected.citation.raag || "Section unavailable")}. ${escapeHtml(context.section_description || "No additional section note is available in the source dataset.")}</p>
+            </div>
+            <div class="context-box">
+              <h3>Poetic role: ${escapeHtml(lineType)}</h3>
+              <p>${escapeHtml(lineTypeNotes[lineType] || "This label describes the line's structural role in the source text.")}</p>
+            </div>
+          </div>
+          <h3 class="passage-heading">The complete Shabad</h3>
+          <p class="passage-note">The selected line is highlighted. Translations are by Dr. Sant Singh Khalsa via Shabad OS 4.8.7.</p>
+          <div class="passage">${passageLines}</div>
+        `;
+      } catch (error) {
+        focusContent.innerHTML = `<div class="empty">Could not open passage: ${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    function closePassage() {
+      focusOverlay.classList.remove("open");
+      document.body.classList.remove("modal-open");
+      focusContent.innerHTML = "";
+      if (lastFocusedCard) lastFocusedCard.focus();
+    }
+
+    resultsEl.addEventListener("click", (event) => {
+      const card = event.target.closest(".card");
+      if (card) openPassage(card);
+    });
+
+    resultsEl.addEventListener("keydown", (event) => {
+      const card = event.target.closest(".card");
+      if (card && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        openPassage(card);
+      }
+    });
+
+    focusClose.addEventListener("click", closePassage);
+    focusOverlay.addEventListener("click", (event) => {
+      if (event.target === focusOverlay) closePassage();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && focusOverlay.classList.contains("open")) closePassage();
+    });
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -255,7 +536,7 @@
         const payload = await response.json();
         renderResults(payload);
       } catch (error) {
-        resultsEl.innerHTML = `<div class="empty">Search failed: ${error.message}</div>`;
+        resultsEl.innerHTML = `<div class="empty">Search failed: ${escapeHtml(error.message)}</div>`;
       }
     });
   </script>
