@@ -183,8 +183,13 @@
       display: none;
       place-items: center;
       padding: clamp(12px, 4vw, 44px);
-      background: rgba(14, 23, 33, 0.64);
-      backdrop-filter: blur(12px);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(243, 210, 178, 0.24), transparent 38%),
+        radial-gradient(circle at 86% 78%, rgba(121, 164, 203, 0.24), transparent 42%),
+        rgba(15, 28, 40, 0.24);
+      -webkit-backdrop-filter: blur(18px) saturate(125%);
+      backdrop-filter: blur(18px) saturate(125%);
     }
 
     .focus-overlay.open {
@@ -192,18 +197,62 @@
       animation: veilIn 220ms ease both;
     }
 
+    .focus-overlay::before,
+    .focus-overlay::after {
+      content: "";
+      position: absolute;
+      width: min(46vw, 560px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(8px);
+      opacity: 0.5;
+    }
+
+    .focus-overlay::before {
+      top: -24%;
+      right: -8%;
+      background: radial-gradient(circle, rgba(255, 245, 223, 0.34), transparent 68%);
+    }
+
+    .focus-overlay::after {
+      bottom: -30%;
+      left: -10%;
+      background: radial-gradient(circle, rgba(145, 190, 224, 0.3), transparent 68%);
+    }
+
     .focus-panel {
       position: relative;
+      z-index: 1;
+      isolation: isolate;
       width: min(1040px, 100%);
       max-height: calc(100vh - 28px);
       overflow: auto;
-      border: 1px solid rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.78);
       border-radius: 24px;
       background:
-        radial-gradient(circle at top right, rgba(67, 114, 173, 0.13), transparent 36%),
-        #fffdf8;
-      box-shadow: 0 32px 90px rgba(5, 14, 24, 0.4);
+        linear-gradient(135deg, rgba(255, 255, 255, 0.66), rgba(247, 242, 230, 0.52)),
+        radial-gradient(circle at top right, rgba(110, 161, 205, 0.18), transparent 38%);
+      -webkit-backdrop-filter: blur(34px) saturate(145%) brightness(1.04);
+      backdrop-filter: blur(34px) saturate(145%) brightness(1.04);
+      box-shadow:
+        0 34px 100px rgba(5, 14, 24, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        inset 0 -1px 0 rgba(84, 108, 130, 0.12);
       transform-origin: center;
+    }
+
+    .focus-panel::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background:
+        linear-gradient(118deg, rgba(255, 255, 255, 0.38), transparent 22% 74%, rgba(255, 255, 255, 0.18)),
+        radial-gradient(circle at 72% -18%, rgba(255, 255, 255, 0.62), transparent 32%);
+      opacity: 0.75;
     }
 
     .focus-panel.animating {
@@ -231,7 +280,9 @@
       height: 42px;
       border: 1px solid var(--border);
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.48);
+      -webkit-backdrop-filter: blur(16px) saturate(135%);
+      backdrop-filter: blur(16px) saturate(135%);
       color: var(--ink);
       font-size: 1.3rem;
       cursor: pointer;
@@ -268,9 +319,12 @@
 
     .context-box {
       padding: 18px;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255, 255, 255, 0.68);
       border-radius: 16px;
-      background: rgba(243, 236, 217, 0.48);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.44), rgba(237, 230, 211, 0.3));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.76),
+        0 8px 24px rgba(20, 35, 52, 0.06);
     }
 
     .context-box h3 {
@@ -305,7 +359,7 @@
       padding: 14px 16px;
       border-left: 3px solid transparent;
       border-radius: 4px 14px 14px 4px;
-      background: rgba(214, 230, 242, 0.28);
+      background: rgba(232, 241, 247, 0.34);
     }
 
     .passage-line.selected {
@@ -343,6 +397,21 @@
       *, *::before, *::after {
         animation-duration: 1ms !important;
         transition-duration: 1ms !important;
+      }
+    }
+
+    @media (prefers-contrast: more) {
+      .focus-overlay {
+        background: rgba(14, 23, 33, 0.64);
+      }
+
+      .focus-panel {
+        background: #fffdf8;
+      }
+
+      .context-box {
+        background: #f7f1e4;
+        border-color: rgba(29, 38, 48, 0.32);
       }
     }
   </style>
