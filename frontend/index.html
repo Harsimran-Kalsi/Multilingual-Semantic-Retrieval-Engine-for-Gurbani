@@ -622,7 +622,8 @@
     const focusPanel = document.getElementById("focusPanel");
     const focusContent = document.getElementById("focusContent");
     const focusClose = document.getElementById("focusClose");
-    let lastFocusedCard = null;
+    let passageReturnFocus = null;
+    let passageReturnScrollY = 0;
     let previousQuestions = [];
 
     function escapeHtml(value) {
@@ -735,10 +736,11 @@
       Pankti: "A standard poetic line within the Shabad's unfolding verse structure."
     };
 
-    async function openPassage(card) {
+    async function openPassage(card, returnFocus = card) {
       const verseId = card.dataset.verseId;
       if (!verseId) return;
-      lastFocusedCard = card;
+      passageReturnFocus = returnFocus;
+      passageReturnScrollY = window.scrollY;
       focusContent.innerHTML = '<div class="empty">Opening the full Shabad…</div>';
       focusPanel.classList.remove("animating");
       focusOverlay.classList.add("open");
@@ -792,7 +794,15 @@
       focusPanel.classList.remove("animating");
       document.body.classList.remove("modal-open");
       focusContent.innerHTML = "";
-      if (lastFocusedCard) lastFocusedCard.focus();
+      const returnFocus = passageReturnFocus;
+      const returnScrollY = passageReturnScrollY;
+      passageReturnFocus = null;
+      requestAnimationFrame(() => {
+        if (returnFocus?.isConnected) {
+          returnFocus.focus({ preventScroll: true });
+        }
+        window.scrollTo({ top: returnScrollY, behavior: "auto" });
+      });
     }
 
     resultsEl.addEventListener("click", (event) => {
@@ -822,7 +832,7 @@
       const card = resultsEl.querySelector(
         `.card[data-source-id="${CSS.escape(citation.dataset.sourceId)}"]`
       );
-      if (card) openPassage(card);
+      if (card) openPassage(card, citation);
     });
 
     answerPanel.addEventListener("submit", (event) => {
