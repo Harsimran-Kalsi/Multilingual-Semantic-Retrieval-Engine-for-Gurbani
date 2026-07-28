@@ -54,3 +54,30 @@ class SearchResponse(BaseModel):
 class PassageResponse(BaseModel):
     selected_verse_id: str
     lines: list[SearchResult]
+
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=2, max_length=1000)
+    top_k: int = Field(default=8, ge=3, le=12)
+    previous_questions: list[str] = Field(default_factory=list, max_length=6)
+
+
+class GroundedStatement(BaseModel):
+    text: str
+    citation_ids: list[str] = Field(default_factory=list)
+
+
+class GroundedAnswer(BaseModel):
+    summary: str
+    summary_citation_ids: list[str] = Field(default_factory=list)
+    statements: list[GroundedStatement] = Field(default_factory=list)
+    caveat: Optional[str] = None
+
+
+class AskResponse(BaseModel):
+    question: str
+    answer: GroundedAnswer
+    sources: list[SearchResult]
+    generated: bool
+    model: Optional[str] = None
+    generation_error: Optional[str] = None

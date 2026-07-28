@@ -8,6 +8,7 @@ Punjabi terms, or a practical set of English concepts.
 - FastAPI backend with `/search` and `/health`
 - Web UI at `/`
 - Clickable result cards with animated full-Shabad reading context
+- Optional AI answers generated only from retrieved passages, with validated citations
 - Corpus-backed retrieval across 60,555 SGGS lines
 - Unicode Gurmukhi, Roman transliteration, English translation, Ang, writer,
   section/Raag, and stable Shabad OS line IDs
@@ -21,6 +22,21 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 uvicorn backend.app.main:app --reload
 ```
+
+To enable grounded AI answers, create an OpenAI API key and either set it in
+the server environment or copy `.env.example` to an ignored `.env` file:
+
+```bash
+export OPENAI_API_KEY="your-key"
+export OPENAI_MODEL="gpt-5.6-terra"  # optional
+uvicorn backend.app.main:app --reload
+```
+
+`Search sources` always works locally. `Ask Gurbani` retrieves SGGS passages
+first, sends only those passages to the model, rejects invented citation IDs,
+and displays the exact sources below the response. Follow-up questions trigger
+a fresh retrieval and grounded answer; earlier questions provide conversational
+context but earlier generated prose is not treated as evidence.
 
 Open:
 

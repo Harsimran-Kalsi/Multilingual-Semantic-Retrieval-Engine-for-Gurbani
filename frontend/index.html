@@ -72,7 +72,7 @@
       display: grid;
       gap: 12px;
       padding: 18px 24px 24px;
-      grid-template-columns: 1fr auto auto;
+      grid-template-columns: 1fr auto auto auto;
       border-bottom: 1px solid var(--border);
     }
 
@@ -106,6 +106,109 @@
       cursor: wait;
       filter: saturate(0.72);
       opacity: 0.82;
+    }
+
+    .search .ask-button {
+      background: #294f73;
+    }
+
+    .answer-panel {
+      display: none;
+      margin: 20px 24px 0;
+      padding: clamp(20px, 4vw, 32px);
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      border-radius: 20px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(236, 245, 250, 0.55));
+      box-shadow:
+        0 18px 42px rgba(20, 35, 52, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      animation: answerIn 560ms cubic-bezier(.18, .82, .22, 1) both;
+    }
+
+    .answer-panel.visible {
+      display: block;
+    }
+
+    @keyframes answerIn {
+      from { opacity: 0; transform: translateY(18px) scale(.975); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .answer-label {
+      margin: 0 0 9px;
+      color: #294f73;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .answer-title {
+      margin: 0 0 18px;
+      font-size: clamp(1.18rem, 3vw, 1.55rem);
+      line-height: 1.35;
+    }
+
+    .answer-statement {
+      margin: 13px 0;
+      color: #293746;
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    .citation-link {
+      display: inline-grid;
+      place-items: center;
+      min-width: 1.55rem;
+      height: 1.55rem;
+      margin-left: 4px;
+      border: 1px solid rgba(41, 79, 115, 0.25);
+      border-radius: 999px;
+      background: rgba(214, 230, 242, 0.72);
+      color: #294f73;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      vertical-align: super;
+    }
+
+    .answer-caveat,
+    .generation-status {
+      margin: 17px 0 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(243, 236, 217, 0.62);
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .follow-up {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .follow-up input {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 13px;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--ink);
+      font-size: 0.94rem;
+    }
+
+    .follow-up button {
+      border: none;
+      border-radius: 12px;
+      padding: 0 16px;
+      background: #294f73;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
     }
 
     .results {
@@ -435,6 +538,14 @@
         height: 44px;
       }
 
+      .follow-up {
+        grid-template-columns: 1fr;
+      }
+
+      .follow-up button {
+        height: 42px;
+      }
+
       .context-grid {
         grid-template-columns: 1fr;
       }
@@ -475,14 +586,17 @@
     </header>
 
     <form class="search" id="searchForm">
-      <input id="queryInput" placeholder="Try: inner peace, simran, ਸਿਮਰਨ" required />
+      <input id="queryInput" placeholder="Ask: How can I overcome ego?" required />
       <select id="topK">
         <option value="3">Top 3</option>
         <option value="5" selected>Top 5</option>
         <option value="10">Top 10</option>
       </select>
-      <button type="submit">Search</button>
+      <button type="submit">Search sources</button>
+      <button type="button" class="ask-button" id="askButton">Ask Gurbani</button>
     </form>
+
+    <section class="answer-panel" id="answerPanel" aria-live="polite"></section>
 
     <section class="results" id="results">
       <div class="empty">Run your first query to view verses with citations.</div>
@@ -502,11 +616,14 @@
     const topK = document.getElementById("topK");
     const resultsEl = document.getElementById("results");
     const searchButton = form.querySelector('button[type="submit"]');
+    const askButton = document.getElementById("askButton");
+    const answerPanel = document.getElementById("answerPanel");
     const focusOverlay = document.getElementById("focusOverlay");
     const focusPanel = document.getElementById("focusPanel");
     const focusContent = document.getElementById("focusContent");
     const focusClose = document.getElementById("focusClose");
     let lastFocusedCard = null;
+    let previousQuestions = [];
 
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -530,6 +647,7 @@
 
       resultsEl.innerHTML = payload.results.map((item, idx) => `
         <article class="card" tabindex="0" role="button" data-verse-id="${escapeHtml(item.verse_id)}"
+          data-source-id="${escapeHtml(item.citation.source_id)}"
           aria-label="Open full passage for Ang ${item.citation.ang}" style="animation-delay:${idx * 70}ms">
           <p class="gurmukhi">${escapeHtml(item.gurmukhi)}</p>
           ${item.transliteration ? `<p class="line"><strong>Transliteration:</strong> ${escapeHtml(item.transliteration)}</p>` : ""}
@@ -552,6 +670,44 @@
           <span class="open-hint">Explore full passage →</span>
         </article>
       `).join("");
+    }
+
+    function renderAnswer(payload) {
+      const sourceNumbers = new Map(
+        payload.sources.map((source, index) => [source.citation.source_id, index + 1])
+      );
+      const statements = (payload.answer.statements || []).map((statement) => {
+        const citations = statement.citation_ids
+          .map((sourceId) => sourceNumbers.has(sourceId)
+            ? `<button class="citation-link" type="button" data-source-id="${escapeHtml(sourceId)}"
+                aria-label="Open source ${sourceNumbers.get(sourceId)}">${sourceNumbers.get(sourceId)}</button>`
+            : "")
+          .join("");
+        return `<p class="answer-statement">${escapeHtml(statement.text)} ${citations}</p>`;
+      }).join("");
+      const summaryCitations = (payload.answer.summary_citation_ids || [])
+        .map((sourceId) => sourceNumbers.has(sourceId)
+          ? `<button class="citation-link" type="button" data-source-id="${escapeHtml(sourceId)}"
+              aria-label="Open source ${sourceNumbers.get(sourceId)}">${sourceNumbers.get(sourceId)}</button>`
+          : "")
+        .join("");
+
+      const status = payload.generated
+        ? `<p class="generation-status">Grounded with ${payload.sources.length} retrieved passages · ${escapeHtml(payload.model || "AI model")}</p>`
+        : `<p class="generation-status"><strong>AI explanation unavailable.</strong> ${escapeHtml(payload.generation_error || "Generation is not configured.")} The source passages below are still real retrieval results.</p>`;
+
+      answerPanel.innerHTML = `
+        <p class="answer-label">Grounded response</p>
+        <h2 class="answer-title">${escapeHtml(payload.answer.summary)} ${summaryCitations}</h2>
+        ${statements}
+        ${payload.answer.caveat ? `<p class="answer-caveat">${escapeHtml(payload.answer.caveat)}</p>` : ""}
+        ${status}
+        <form class="follow-up" id="followUpForm">
+          <input id="followUpInput" placeholder="Ask a follow-up about these teachings…" required />
+          <button type="submit">Ask follow-up</button>
+        </form>
+      `;
+      answerPanel.classList.add("visible");
     }
 
     function resizeResults(render) {
@@ -660,11 +816,70 @@
       if (event.key === "Escape" && focusOverlay.classList.contains("open")) closePassage();
     });
 
+    answerPanel.addEventListener("click", (event) => {
+      const citation = event.target.closest(".citation-link");
+      if (!citation) return;
+      const card = resultsEl.querySelector(
+        `.card[data-source-id="${CSS.escape(citation.dataset.sourceId)}"]`
+      );
+      if (card) openPassage(card);
+    });
+
+    answerPanel.addEventListener("submit", (event) => {
+      if (event.target.id !== "followUpForm") return;
+      event.preventDefault();
+      const input = document.getElementById("followUpInput");
+      const question = input.value.trim();
+      if (question) performAsk(question);
+    });
+
+    async function performAsk(question) {
+      askButton.disabled = true;
+      searchButton.disabled = true;
+      askButton.textContent = "Grounding…";
+      answerPanel.classList.add("visible");
+      answerPanel.innerHTML = '<div class="empty searching">Retrieving passages, then composing a cited response…</div>';
+      resizeResults(() => {
+        resultsEl.innerHTML = '<div class="empty searching">Searching the Sri Guru Granth Sahib…</div>';
+      });
+      try {
+        const response = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question,
+            top_k: Math.max(5, Number(topK.value)),
+            previous_questions: previousQuestions
+          })
+        });
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        const payload = await response.json();
+        previousQuestions = [...previousQuestions, question].slice(-6);
+        queryInput.value = question;
+        renderAnswer(payload);
+        resizeResults(() => renderResults({ results: payload.sources }));
+      } catch (error) {
+        answerPanel.innerHTML = `<div class="empty">Could not generate an answer: ${escapeHtml(error.message)}</div>`;
+      } finally {
+        askButton.disabled = false;
+        searchButton.disabled = false;
+        askButton.textContent = "Ask Gurbani";
+      }
+    }
+
+    askButton.addEventListener("click", () => {
+      const question = queryInput.value.trim();
+      if (question) performAsk(question);
+    });
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const query = queryInput.value.trim();
       if (!query) return;
 
+      previousQuestions = [];
+      answerPanel.classList.remove("visible");
+      answerPanel.innerHTML = "";
       searchButton.disabled = true;
       searchButton.textContent = "Searching…";
       resultsEl.classList.add("refreshing");
@@ -696,7 +911,7 @@
         });
       } finally {
         searchButton.disabled = false;
-        searchButton.textContent = "Search";
+        searchButton.textContent = "Search sources";
       }
     });
   </script>
