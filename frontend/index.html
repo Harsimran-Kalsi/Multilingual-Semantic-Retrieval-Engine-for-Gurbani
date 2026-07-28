@@ -102,10 +102,23 @@
       filter: brightness(1.03);
     }
 
+    .search button:disabled {
+      cursor: wait;
+      filter: saturate(0.72);
+      opacity: 0.82;
+    }
+
     .results {
       padding: 20px 24px 26px;
       display: grid;
       gap: 12px;
+      overflow: hidden;
+      transition: height 480ms cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .results.refreshing .card {
+      pointer-events: none;
+      animation: resultAway 180ms ease both;
     }
 
     .empty {
@@ -121,7 +134,7 @@
       border-radius: 16px;
       background: rgba(255, 255, 255, 0.92);
       padding: 16px;
-      animation: fadeIn 340ms ease both;
+      animation: resultGrow 520ms cubic-bezier(.18, .82, .22, 1) both;
       cursor: pointer;
       transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
     }
@@ -143,9 +156,47 @@
       letter-spacing: 0.02em;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes resultGrow {
+      0% {
+        opacity: 0;
+        transform: translateY(18px) scale(.955);
+        clip-path: inset(0 0 34% 0 round 16px);
+      }
+      68% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.006);
+        clip-path: inset(0 0 0 0 round 16px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        clip-path: inset(0 0 0 0 round 16px);
+      }
+    }
+
+    @keyframes resultAway {
+      to {
+        opacity: 0;
+        transform: translateY(-8px) scale(.98);
+      }
+    }
+
+    .searching {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .searching::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+      animation: searchShimmer 1.05s ease-in-out infinite;
+    }
+
+    @keyframes searchShimmer {
+      to { transform: translateX(100%); }
     }
 
     .gurmukhi {
@@ -450,6 +501,7 @@
     const queryInput = document.getElementById("queryInput");
     const topK = document.getElementById("topK");
     const resultsEl = document.getElementById("results");
+    const searchButton = form.querySelector('button[type="submit"]');
     const focusOverlay = document.getElementById("focusOverlay");
     const focusPanel = document.getElementById("focusPanel");
     const focusContent = document.getElementById("focusContent");
@@ -501,6 +553,24 @@
         </article>
       `).join("");
     }
+
+    function resizeResults(render) {
+      const startHeight = resultsEl.getBoundingClientRect().height;
+      resultsEl.style.height = `${startHeight}px`;
+      render();
+      const targetHeight = resultsEl.scrollHeight;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resultsEl.style.height = `${targetHeight}px`;
+        });
+      });
+    }
+
+    resultsEl.addEventListener("transitionend", (event) => {
+      if (event.propertyName === "height") {
+        resultsEl.style.height = "auto";
+      }
+    });
 
     const lineTypeNotes = {
       Manglacharan: "An invocation or opening expression that establishes the sacred orientation of the composition.",
@@ -595,7 +665,14 @@
       const query = queryInput.value.trim();
       if (!query) return;
 
-      resultsEl.innerHTML = '<div class="empty">Searching...</div>';
+      searchButton.disabled = true;
+      searchButton.textContent = "Searching…";
+      resultsEl.classList.add("refreshing");
+      await new Promise((resolve) => setTimeout(resolve, 180));
+      resultsEl.classList.remove("refreshing");
+      resizeResults(() => {
+        resultsEl.innerHTML = '<div class="empty searching">Searching the Sri Guru Granth Sahib…</div>';
+      });
 
       try {
         const response = await fetch("/search", {
@@ -612,9 +689,14 @@
         }
 
         const payload = await response.json();
-        renderResults(payload);
+        resizeResults(() => renderResults(payload));
       } catch (error) {
-        resultsEl.innerHTML = `<div class="empty">Search failed: ${escapeHtml(error.message)}</div>`;
+        resizeResults(() => {
+          resultsEl.innerHTML = `<div class="empty">Search failed: ${escapeHtml(error.message)}</div>`;
+        });
+      } finally {
+        searchButton.disabled = false;
+        searchButton.textContent = "Search";
       }
     });
   </script>
