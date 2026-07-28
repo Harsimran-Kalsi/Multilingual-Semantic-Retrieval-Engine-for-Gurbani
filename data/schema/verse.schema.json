@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/verse.schema.json",
+  "title": "GurbaniVerse",
+  "type": "object",
+  "required": [
+    "verse_id",
+    "gurmukhi",
+    "citation"
+  ],
+  "properties": {
+    "verse_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gurmukhi": {
+      "type": "string",
+      "minLength": 1
+    },
+    "transliteration": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "translation": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "translations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "lang",
+          "text"
+        ],
+        "properties": {
+          "lang": {
+            "type": "string",
+            "minLength": 2
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "translator": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "citation": {
+      "type": "object",
+      "required": [
+        "source_id",
+        "ang"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string"
+        },
+        "ang": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "raag": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "author": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "line_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "line_end": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

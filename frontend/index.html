@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gurbani Semantic Search</title>
+  <style>
+    :root {
+      --bg-1: #f3ecd9;
+      --bg-2: #d6e6f2;
+      --ink: #1d2630;
+      --muted: #5d6a78;
+      --accent: #b2412e;
+      --card: rgba(255, 255, 255, 0.78);
+      --border: rgba(29, 38, 48, 0.14);
+      --shadow: 0 16px 40px rgba(20, 35, 52, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 18%, rgba(178, 65, 46, 0.16), transparent 40%),
+        radial-gradient(circle at 92% 10%, rgba(67, 114, 173, 0.18), transparent 42%),
+        linear-gradient(130deg, var(--bg-1), var(--bg-2));
+      display: grid;
+      place-items: center;
+      padding: 32px 18px;
+    }
+
+    .shell {
+      width: min(980px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+      backdrop-filter: blur(4px);
+      overflow: hidden;
+      animation: rise 480ms ease-out;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .header {
+      padding: 24px 24px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(1.35rem, 3.6vw, 2rem);
+      letter-spacing: 0.02em;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .search {
+      display: grid;
+      gap: 12px;
+      padding: 18px 24px 24px;
+      grid-template-columns: 1fr auto auto;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .search input,
+    .search select {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.98rem;
+      background: #ffffff;
+      color: var(--ink);
+    }
+
+    .search button {
+      border: none;
+      border-radius: 12px;
+      padding: 0 18px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    .search button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    .results {
+      padding: 20px 24px 26px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px dashed var(--border);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 16px;
+      animation: fadeIn 340ms ease both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .gurmukhi {
+      margin: 0;
+      font-size: 1.22rem;
+      line-height: 1.6;
+      font-family: "Raavi", "Noto Sans Gurmukhi", sans-serif;
+    }
+
+    .line {
+      margin: 7px 0 0;
+      font-size: 0.94rem;
+      color: #344252;
+    }
+
+    .meta {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .score {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 720px) {
+      .search {
+        grid-template-columns: 1fr;
+      }
+
+      .search button {
+        height: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <h1 class="title">Gurbani Semantic Search</h1>
+      <p class="subtitle">Search common English concepts, Roman Punjabi terms, or Gurmukhi. Every result includes an Ang citation.</p>
+    </header>
+
+    <form class="search" id="searchForm">
+      <input id="queryInput" placeholder="Try: inner peace, simran, ਸਿਮਰਨ" required />
+      <select id="topK">
+        <option value="3">Top 3</option>
+        <option value="5" selected>Top 5</option>
+        <option value="10">Top 10</option>
+      </select>
+      <button type="submit">Search</button>
+    </form>
+
+    <section class="results" id="results">
+      <div class="empty">Run your first query to view verses with citations.</div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("searchForm");
+    const queryInput = document.getElementById("queryInput");
+    const topK = document.getElementById("topK");
+    const resultsEl = document.getElementById("results");
+
+    function score(value) {
+      return typeof value === "number" ? value.toFixed(3) : "n/a";
+    }
+
+    function renderResults(payload) {
+      if (!payload.results || payload.results.length === 0) {
+        resultsEl.innerHTML = '<div class="empty">No results found for this query.</div>';
+        return;
+      }
+
+      resultsEl.innerHTML = payload.results.map((item, idx) => `
+        <article class="card" style="animation-delay:${idx * 70}ms">
+          <p class="gurmukhi">${item.gurmukhi}</p>
+          ${item.transliteration ? `<p class="line"><strong>Transliteration:</strong> ${item.transliteration}</p>` : ""}
+          ${
+            Array.isArray(item.translations) && item.translations.length
+              ? item.translations.map((t) =>
+                  `<p class="line"><strong>Translation (${t.lang}${t.translator ? `, ${t.translator}` : ""}):</strong> ${t.text}</p>`
+                ).join("")
+              : (item.translation ? `<p class="line"><strong>Translation:</strong> ${item.translation}</p>` : "")
+          }
+          <p class="line"><strong>Why matched:</strong> ${item.match_explanation}</p>
+          <div class="meta">
+            <span><strong>Ang:</strong> ${item.citation.ang}</span>
+            <span><strong>Raag:</strong> ${item.citation.raag || "n/a"}</span>
+            <span><strong>Author:</strong> ${item.citation.author || "n/a"}</span>
+            <span><strong>Source:</strong> ${item.citation.source_id}</span>
+          </div>
+          <div class="score">
+            sparse=${score(item.sparse_score)} | dense=${score(item.dense_score)} | rerank=${score(item.rerank_score)}
+          </div>
+        </article>
+      `).join("");
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const query = queryInput.value.trim();
+      if (!query) return;
+
+      resultsEl.innerHTML = '<div class="empty">Searching...</div>';
+
+      try {
+        const response = await fetch("/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            top_k: Number(topK.value)
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const payload = await response.json();
+        renderResults(payload);
+      } catch (error) {
+        resultsEl.innerHTML = `<div class="empty">Search failed: ${error.message}</div>`;
+      }
+    });
+  </script>
+</body>
+</html>
