@@ -259,6 +259,56 @@
       letter-spacing: 0.02em;
     }
 
+    .feedback-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .feedback-button {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.8);
+      color: #344252;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+    }
+
+    .feedback-button:hover:not(:disabled),
+    .feedback-button:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(41, 79, 115, 0.42);
+      outline: none;
+    }
+
+    .feedback-button.selected {
+      border-color: rgba(41, 79, 115, 0.4);
+      background: rgba(214, 230, 242, 0.8);
+      color: #294f73;
+    }
+
+    .feedback-button:disabled {
+      cursor: default;
+      opacity: 0.62;
+    }
+
+    .feedback-button.selected:disabled {
+      opacity: 1;
+    }
+
+    .feedback-status {
+      min-width: 7rem;
+    }
+
     @keyframes resultGrow {
       0% {
         opacity: 0;
@@ -328,6 +378,15 @@
       margin-top: 8px;
       font-size: 0.82rem;
       color: var(--muted);
+    }
+
+    .retrieval-status {
+      margin: 0 0 2px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     .focus-overlay {
@@ -525,6 +584,87 @@
       font-size: 1.08rem;
     }
 
+    .reader-launch,
+    .reader-control {
+      border: 1px solid rgba(41, 79, 115, 0.28);
+      border-radius: 12px;
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.58);
+      color: #294f73;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    .reader-launch {
+      margin-top: 18px;
+      background: #294f73;
+      color: white;
+    }
+
+    .reader-launch.upward {
+      margin: 0 0 18px;
+    }
+
+    .reader-stream {
+      display: grid;
+      gap: 12px;
+    }
+
+    .reader-line {
+      padding: 18px;
+      border: 1px solid rgba(29, 38, 48, 0.1);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.36);
+    }
+
+    .reader-line.selected {
+      border-color: rgba(178, 65, 46, 0.42);
+      background: rgba(178, 65, 46, 0.08);
+      box-shadow: 0 8px 28px rgba(178, 65, 46, 0.08);
+    }
+
+    .reader-ang-divider {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 28px 0 4px;
+      padding: 14px 2px 8px;
+      border-bottom: 1px solid rgba(178, 65, 46, 0.28);
+    }
+
+    .reader-ang-divider strong {
+      color: var(--accent);
+      font-family: Georgia, serif;
+      font-size: 1.2rem;
+    }
+
+    .reader-shabad-divider {
+      margin: 14px 0 -2px;
+      padding: 10px 13px;
+      border-radius: 11px;
+      background: rgba(41, 79, 115, 0.08);
+      color: #294f73;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .reader-citation {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .reader-load {
+      display: grid;
+      place-items: center;
+      min-height: 46px;
+    }
+
     body.modal-open {
       overflow: hidden;
     }
@@ -625,6 +765,12 @@
     let passageReturnFocus = null;
     let passageReturnScrollY = 0;
     let previousQuestions = [];
+    let currentQuery = "";
+    let readerSelectedId = null;
+    let readerEarlierLines = [];
+    let readerHasLater = false;
+    let readerLaterLines = [];
+    let readerHasEarlier = false;
 
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -646,9 +792,18 @@
         return;
       }
 
-      resultsEl.innerHTML = payload.results.map((item, idx) => `
+      const retrievalMode = payload.retrieval_mode || (
+        payload.results.some((item) => typeof item.dense_score === "number")
+          ? "hybrid"
+          : "keyword"
+      );
+      resultsEl.innerHTML = `<p class="retrieval-status">${escapeHtml(retrievalMode)} retrieval</p>` + payload.results.map((item, idx) => `
         <article class="card" tabindex="0" role="button" data-verse-id="${escapeHtml(item.verse_id)}"
           data-source-id="${escapeHtml(item.citation.source_id)}"
+          data-result-rank="${idx + 1}"
+          data-sparse-score="${item.sparse_score ?? ""}"
+          data-dense-score="${item.dense_score ?? ""}"
+          data-fusion-score="${item.fusion_score ?? ""}"
           aria-label="Open full passage for Ang ${item.citation.ang}" style="animation-delay:${idx * 70}ms">
           <p class="gurmukhi">${escapeHtml(item.gurmukhi)}</p>
           ${item.transliteration ? `<p class="line"><strong>Transliteration:</strong> ${escapeHtml(item.transliteration)}</p>` : ""}
@@ -666,7 +821,13 @@
             <span><strong>Author:</strong> ${escapeHtml(item.citation.author || "n/a")}</span>
           </div>
           <div class="score">
-            sparse=${score(item.sparse_score)} | dense=${score(item.dense_score)} | rerank=${score(item.rerank_score)}
+            sparse=${score(item.sparse_score)} | dense=${score(item.dense_score)} | fusion=${score(item.fusion_score)}
+          </div>
+          <div class="feedback-row" aria-label="Rate this search result">
+            <span>Was this relevant?</span>
+            <button class="feedback-button" type="button" data-helpful="true">Helpful</button>
+            <button class="feedback-button" type="button" data-helpful="false">Not relevant</button>
+            <span class="feedback-status" aria-live="polite"></span>
           </div>
           <span class="open-hint">Explore full passage →</span>
         </article>
@@ -694,7 +855,7 @@
         .join("");
 
       const status = payload.generated
-        ? `<p class="generation-status">Grounded with ${payload.sources.length} retrieved passages · ${escapeHtml(payload.model || "AI model")}</p>`
+        ? `<p class="generation-status">Grounded with ${payload.sources.length} retrieved passages · ${escapeHtml(payload.retrieval_mode || "keyword")} retrieval · ${escapeHtml(payload.model || "AI model")}</p>`
         : `<p class="generation-status"><strong>AI explanation unavailable.</strong> ${escapeHtml(payload.generation_error || "Generation is not configured.")} The source passages below are still real retrieval results.</p>`;
 
       answerPanel.innerHTML = `
@@ -782,12 +943,173 @@
           </div>
           <h3 class="passage-heading">The complete Shabad</h3>
           <p class="passage-note">The selected line is highlighted. Translations are by Dr. Sant Singh Khalsa via Shabad OS 4.8.7.</p>
+          <button class="reader-launch upward" type="button" data-reader-action="open-earlier"
+            data-anchor-id="${escapeHtml(payload.lines[0].verse_id)}">← Continue reading upward</button>
           <div class="passage">${passageLines}</div>
+          <button class="reader-launch" type="button" data-reader-action="open"
+            data-verse-id="${escapeHtml(verseId)}"
+            data-anchor-id="${escapeHtml(payload.lines[payload.lines.length - 1].verse_id)}">Continue reading downward →</button>
         `;
       } catch (error) {
         focusContent.innerHTML = `<div class="empty">Could not open passage: ${escapeHtml(error.message)}</div>`;
       }
     }
+
+    function readerLineHtml(line) {
+      return `
+        <article class="reader-line ${line.verse_id === readerSelectedId ? "selected" : ""}" data-reader-verse-id="${escapeHtml(line.verse_id)}">
+          <p class="reader-citation">Ang ${line.citation.ang} · ${escapeHtml(line.citation.raag || "Sri Guru Granth Sahib Ji")} · ${escapeHtml(line.citation.author || "Unknown writer")}</p>
+          <p class="gurmukhi">${escapeHtml(line.gurmukhi)}</p>
+          ${line.transliteration ? `<p class="line">${escapeHtml(line.transliteration)}</p>` : ""}
+          ${line.translation ? `<p class="line">${escapeHtml(line.translation)}</p>` : ""}
+        </article>`;
+    }
+
+    function renderReaderStream(streamId, loadedLines) {
+      let previousAng = null;
+      let previousShabad = null;
+      const html = loadedLines.map((line) => {
+        const shabadId = line.context?.shabad_id || line.verse_id;
+        const angChanged = line.citation.ang !== previousAng;
+        const shabadChanged = shabadId !== previousShabad;
+        let heading = "";
+        if (angChanged) {
+          heading += `<header class="reader-ang-divider"><strong>Ang ${line.citation.ang}</strong><span>${escapeHtml(line.citation.raag || "Sri Guru Granth Sahib Ji")}</span></header>`;
+        }
+        if (shabadChanged) {
+          heading += `<div class="reader-shabad-divider">New Shabad · ${escapeHtml(line.citation.author || "Writer unavailable")} · ${escapeHtml(line.citation.raag || "Section unavailable")}</div>`;
+        }
+        previousAng = line.citation.ang;
+        previousShabad = shabadId;
+        return heading + readerLineHtml(line);
+      }).join("");
+      document.getElementById(streamId).innerHTML = html;
+    }
+
+    function updateLaterControl() {
+      const later = document.getElementById("readerLater");
+      if (later) later.innerHTML = readerHasLater
+        ? '<button class="reader-control" type="button" data-reader-action="later">Load later lines</button>'
+        : '<span class="passage-note">End of Sri Guru Granth Sahib Ji</span>';
+    }
+
+    function updateEarlierControl() {
+      const earlier = document.getElementById("readerEarlier");
+      if (earlier) earlier.innerHTML = readerHasEarlier
+        ? '<button class="reader-control" type="button" data-reader-action="earlier">Load earlier lines</button>'
+        : '<span class="passage-note">Beginning of Sri Guru Granth Sahib Ji</span>';
+    }
+
+    async function openContinuousReader(verseId, anchorId, button) {
+      readerSelectedId = verseId;
+      readerLaterLines = [];
+      button.insertAdjacentHTML("afterend", `
+        <section class="continuous-reader" id="continuousReader">
+        <h3 class="passage-heading">Continuing in canonical order</h3>
+        <p class="passage-note">Ang and Shabad boundaries remain visible as you continue downward.</p>
+        <div class="reader-stream" id="readerLaterStream"></div>
+        <div class="reader-load" id="readerLater"><span class="passage-note">Loading later lines…</span></div>
+        </section>`);
+      button.remove();
+      try {
+        const response = await fetch(`/reader/${encodeURIComponent(anchorId)}?before=0&after=30`);
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        const payload = await response.json();
+        readerHasLater = payload.has_more_after;
+        readerLaterLines = payload.lines.filter((line) => line.verse_id !== anchorId);
+        renderReaderStream("readerLaterStream", readerLaterLines);
+        updateLaterControl();
+      } catch (error) {
+        document.getElementById("continuousReader").innerHTML = `<div class="empty">Could not load later lines: ${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    async function openEarlierReader(anchorId, button) {
+      readerEarlierLines = [];
+      const heightBeforeShell = focusPanel.scrollHeight;
+      button.insertAdjacentHTML("beforebegin", `
+        <section class="continuous-reader" id="earlierReader">
+          <div class="reader-load" id="readerEarlier"><span class="passage-note">Loading earlier lines…</span></div>
+          <div class="reader-stream" id="readerEarlierStream"></div>
+          <h3 class="passage-heading">Earlier in canonical order</h3>
+          <p class="passage-note">The complete Shabad continues below.</p>
+        </section>`);
+      button.remove();
+      focusPanel.scrollTop += focusPanel.scrollHeight - heightBeforeShell;
+      try {
+        const response = await fetch(`/reader/${encodeURIComponent(anchorId)}?before=30&after=0`);
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        const payload = await response.json();
+        const heightBeforeLines = focusPanel.scrollHeight;
+        readerEarlierLines = payload.lines.filter((line) => line.verse_id !== anchorId);
+        readerHasEarlier = payload.has_more_before;
+        renderReaderStream("readerEarlierStream", readerEarlierLines);
+        updateEarlierControl();
+        focusPanel.scrollTop += focusPanel.scrollHeight - heightBeforeLines;
+      } catch (error) {
+        document.getElementById("earlierReader").innerHTML = `<div class="empty">Could not load earlier lines: ${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    async function extendLaterReader(button) {
+      if (!readerLaterLines.length) return;
+      const anchor = readerLaterLines[readerLaterLines.length - 1].verse_id;
+      button.disabled = true;
+      button.textContent = "Loading…";
+      try {
+        const response = await fetch(`/reader/${encodeURIComponent(anchor)}?before=0&after=30`);
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        const payload = await response.json();
+        const newLines = payload.lines.filter((line) => line.verse_id !== anchor);
+        readerLaterLines = [...readerLaterLines, ...newLines];
+        renderReaderStream("readerLaterStream", readerLaterLines);
+        readerHasLater = payload.has_more_after;
+        updateLaterControl();
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = "Retry later lines";
+      }
+    }
+
+    async function extendEarlierReader(button) {
+      if (!readerEarlierLines.length) return;
+      const anchor = readerEarlierLines[0].verse_id;
+      button.disabled = true;
+      button.textContent = "Loading…";
+      try {
+        const response = await fetch(`/reader/${encodeURIComponent(anchor)}?before=30&after=0`);
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        const payload = await response.json();
+        const newLines = payload.lines.filter((line) => line.verse_id !== anchor);
+        const oldHeight = focusPanel.scrollHeight;
+        readerEarlierLines = [...newLines, ...readerEarlierLines];
+        renderReaderStream("readerEarlierStream", readerEarlierLines);
+        readerHasEarlier = payload.has_more_before;
+        updateEarlierControl();
+        focusPanel.scrollTop += focusPanel.scrollHeight - oldHeight;
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = "Retry earlier lines";
+      }
+    }
+
+    focusContent.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-reader-action]");
+      if (!button) return;
+      const action = button.dataset.readerAction;
+      if (action === "open") {
+        openContinuousReader(
+          button.dataset.verseId,
+          button.dataset.anchorId,
+          button
+        );
+      }
+      if (action === "open-earlier") {
+        openEarlierReader(button.dataset.anchorId, button);
+      }
+      if (action === "later") extendLaterReader(button);
+      if (action === "earlier") extendEarlierReader(button);
+    });
 
     function closePassage() {
       focusOverlay.classList.remove("open");
@@ -805,14 +1127,52 @@
       });
     }
 
+    async function submitFeedback(button) {
+      const card = button.closest(".card");
+      if (!card || !currentQuery) return;
+      const buttons = [...card.querySelectorAll(".feedback-button")];
+      const status = card.querySelector(".feedback-status");
+      buttons.forEach((item) => { item.disabled = true; });
+      status.textContent = "Saving…";
+      const optionalNumber = (value) => value === "" ? null : Number(value);
+      try {
+        const response = await fetch("/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: currentQuery,
+            verse_id: card.dataset.verseId,
+            source_id: card.dataset.sourceId,
+            result_rank: Number(card.dataset.resultRank),
+            helpful: button.dataset.helpful === "true",
+            sparse_score: optionalNumber(card.dataset.sparseScore),
+            dense_score: optionalNumber(card.dataset.denseScore),
+            fusion_score: optionalNumber(card.dataset.fusionScore)
+          })
+        });
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        button.classList.add("selected");
+        status.textContent = "Thanks—saved locally.";
+      } catch (error) {
+        buttons.forEach((item) => { item.disabled = false; });
+        status.textContent = "Could not save.";
+      }
+    }
+
     resultsEl.addEventListener("click", (event) => {
+      const feedbackButton = event.target.closest(".feedback-button");
+      if (feedbackButton) {
+        event.stopPropagation();
+        submitFeedback(feedbackButton);
+        return;
+      }
       const card = event.target.closest(".card");
       if (card) openPassage(card);
     });
 
     resultsEl.addEventListener("keydown", (event) => {
       const card = event.target.closest(".card");
-      if (card && (event.key === "Enter" || event.key === " ")) {
+      if (card && event.target === card && (event.key === "Enter" || event.key === " ")) {
         event.preventDefault();
         openPassage(card);
       }
@@ -844,6 +1204,7 @@
     });
 
     async function performAsk(question) {
+      currentQuery = question;
       askButton.disabled = true;
       searchButton.disabled = true;
       askButton.textContent = "Grounding…";
@@ -867,7 +1228,10 @@
         previousQuestions = [...previousQuestions, question].slice(-6);
         queryInput.value = question;
         renderAnswer(payload);
-        resizeResults(() => renderResults({ results: payload.sources }));
+        resizeResults(() => renderResults({
+          results: payload.sources,
+          retrieval_mode: payload.retrieval_mode
+        }));
       } catch (error) {
         answerPanel.innerHTML = `<div class="empty">Could not generate an answer: ${escapeHtml(error.message)}</div>`;
       } finally {
@@ -887,6 +1251,7 @@
       const query = queryInput.value.trim();
       if (!query) return;
 
+      currentQuery = query;
       previousQuestions = [];
       answerPanel.classList.remove("visible");
       answerPanel.innerHTML = "";

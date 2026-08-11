@@ -41,7 +41,7 @@ class SearchResult(BaseModel):
     citation: VerseCitation
     sparse_score: Optional[float] = None
     dense_score: Optional[float] = None
-    rerank_score: Optional[float] = None
+    fusion_score: Optional[float] = None
     match_explanation: str
 
 
@@ -49,11 +49,35 @@ class SearchResponse(BaseModel):
     query: str
     normalized_query: str
     results: list[SearchResult]
+    retrieval_mode: str
+
+
+class FeedbackRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=1000)
+    verse_id: str = Field(min_length=1, max_length=100)
+    source_id: str = Field(min_length=1, max_length=200)
+    result_rank: int = Field(ge=1, le=20)
+    helpful: bool
+    sparse_score: Optional[float] = None
+    dense_score: Optional[float] = None
+    fusion_score: Optional[float] = None
+
+
+class FeedbackResponse(BaseModel):
+    recorded: bool
+    feedback_id: int
 
 
 class PassageResponse(BaseModel):
     selected_verse_id: str
     lines: list[SearchResult]
+
+
+class ReaderWindowResponse(BaseModel):
+    selected_verse_id: str
+    lines: list[SearchResult]
+    has_more_before: bool
+    has_more_after: bool
 
 
 class AskRequest(BaseModel):
@@ -81,3 +105,4 @@ class AskResponse(BaseModel):
     generated: bool
     model: Optional[str] = None
     generation_error: Optional[str] = None
+    retrieval_mode: str = "keyword"

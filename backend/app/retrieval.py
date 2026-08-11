@@ -58,6 +58,11 @@ QUERY_ALIASES = {
     "soul": ["spirit", "ਆਤਮ", "ਜੀਉ"],
 }
 
+ROMAN_PUNJABI_TERMS = {
+    "naam", "waheguru", "haumai", "sach", "hukam", "seva", "sewa",
+    "prem", "simran", "kirpa", "satgur", "satguru", "nirbhau",
+}
+
 
 def _normalize_text(text: Any) -> str:
     if text is None:
@@ -88,7 +93,7 @@ def _fts_term(term: str) -> str:
 class CorpusRetriever:
     """Shabad-level BM25 + optional embedding retrieval with RRF fusion."""
 
-    INDEX_VERSION = "2"
+    INDEX_VERSION = "3"
     RRF_K = 60
 
     def __init__(
@@ -105,6 +110,9 @@ class CorpusRetriever:
         )
         self.records = self._load_records()
         self.records_by_id = {row.get("verse_id"): row for row in self.records}
+        self.record_positions = {
+            row.get("verse_id"): index for index, row in enumerate(self.records)
+        }
         self.shabads: dict[str, list[dict[str, Any]]] = {}
         for row in self.records:
             shabad_id = str((row.get("context") or {}).get("shabad_id") or "")
@@ -154,11 +162,20 @@ class CorpusRetriever:
             if self._index_is_current(connection):
                 connection.close()
                 return
+            stat = self.corpus_path.stat()
+            try:
+                old_meta = dict(connection.execute("SELECT key, value FROM index_meta"))
+            except sqlite3.Error:
+                old_meta = {}
+            same_corpus = (
+                old_meta.get("corpus_size") == str(stat.st_size)
+                and old_meta.get("corpus_mtime_ns") == str(stat.st_mtime_ns)
+            )
             connection.executescript(
                 """
                 DROP TABLE IF EXISTS shabad_fts;
+                DROP TABLE IF EXISTS line_fts;
                 DROP TABLE IF EXISTS shabad_meta;
-                DROP TABLE IF EXISTS embeddings;
                 DROP TABLE IF EXISTS index_meta;
                 CREATE TABLE index_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
                 CREATE TABLE shabad_meta (
@@ -174,7 +191,15 @@ class CorpusRetriever:
                     gurmukhi,
                     tokenize='unicode61 remove_diacritics 0'
                 );
-                CREATE TABLE embeddings (
+                CREATE VIRTUAL TABLE line_fts USING fts5(
+                    verse_id UNINDEXED,
+                    shabad_id UNINDEXED,
+                    translation,
+                    transliteration,
+                    gurmukhi,
+                    tokenize='unicode61 remove_diacritics 0'
+                );
+                CREATE TABLE IF NOT EXISTS embeddings (
                     shabad_id TEXT PRIMARY KEY,
                     model TEXT NOT NULL,
                     dimensions INTEGER NOT NULL,
@@ -182,7 +207,10 @@ class CorpusRetriever:
                 );
                 """
             )
+            if not same_corpus:
+                connection.execute("DELETE FROM embeddings")
             fts_rows = []
+            line_rows = []
             meta_rows = []
             for shabad_id, rows in self.shabads.items():
                 citation = rows[0].get("citation") or {}
@@ -202,13 +230,25 @@ class CorpusRetriever:
                         citation.get("ang"),
                     )
                 )
+                line_rows.extend(
+                    (
+                        row.get("verse_id"),
+                        shabad_id,
+                        str(row.get("translation") or ""),
+                        str(row.get("transliteration") or ""),
+                        str(row.get("gurmukhi") or ""),
+                    )
+                    for row in rows
+                )
             connection.executemany(
                 "INSERT INTO shabad_fts VALUES (?, ?, ?, ?)", fts_rows
             )
             connection.executemany(
                 "INSERT INTO shabad_meta VALUES (?, ?, ?, ?)", meta_rows
             )
-            stat = self.corpus_path.stat()
+            connection.executemany(
+                "INSERT INTO line_fts VALUES (?, ?, ?, ?, ?)", line_rows
+            )
             connection.executemany(
                 "INSERT INTO index_meta VALUES (?, ?)",
                 [
@@ -344,8 +384,26 @@ class CorpusRetriever:
                 return False
         return True
 
+    @staticmethod
+    def _query_profile(query: str, language_hint: Optional[str] = None) -> str:
+        if language_hint == "en":
+            return "english"
+        if language_hint == "pa-guru" or GURMUKHI_RE.search(query):
+            return "gurmukhi"
+        meaningful = _tokens(query, remove_stopwords=True)
+        roman_hits = sum(token in ROMAN_PUNJABI_TERMS for token in meaningful)
+        if language_hint == "pa" or (
+            roman_hits > 0 and roman_hits / max(1, len(meaningful)) >= 0.4
+        ):
+            return "roman-punjabi"
+        return "english"
+
     def _lexical_ranking(
-        self, query: str, filters: dict[str, str], limit: int = 80
+        self,
+        query: str,
+        filters: dict[str, str],
+        field_weights: tuple[float, float, float],
+        limit: int = 80,
     ) -> list[tuple[str, float]]:
         terms = _expanded_terms(query)
         if not terms:
@@ -360,19 +418,56 @@ class CorpusRetriever:
                 params.append(value)
         params.append(limit)
         connection = self._connect()
+        translation_weight, transliteration_weight, gurmukhi_weight = field_weights
         rows = connection.execute(
             f"""
-            SELECT f.shabad_id, bm25(shabad_fts, 0.0, 4.0, 2.0, 2.5) AS score
+            SELECT f.shabad_id, bm25(shabad_fts, 0.0, ?, ?, ?) AS score
             FROM shabad_fts f
             JOIN shabad_meta m ON m.shabad_id = f.shabad_id
             WHERE {' AND '.join(where)}
             ORDER BY score
             LIMIT ?
             """,
-            params,
+            [translation_weight, transliteration_weight, gurmukhi_weight, *params],
         ).fetchall()
         connection.close()
         return [(str(row["shabad_id"]), float(-row["score"])) for row in rows]
+
+    def _line_lexical_ranking(
+        self, query: str, filters: dict[str, str], field_weights: tuple[float, float, float],
+        limit: int = 240,
+    ) -> list[tuple[str, str, float]]:
+        terms = _expanded_terms(query)
+        if not terms:
+            return []
+        match = " OR ".join(_fts_term(term) for term in terms)
+        where = ["line_fts MATCH ?"]
+        params: list[Any] = [match]
+        for key, column in (("author", "author"), ("raag", "raag"), ("ang", "first_ang")):
+            value = str(filters.get(key, "")).strip()
+            if value:
+                where.append(f"LOWER(CAST(m.{column} AS TEXT)) = LOWER(?)")
+                params.append(value)
+        params.append(limit)
+        translation_weight, transliteration_weight, gurmukhi_weight = field_weights
+        connection = self._connect()
+        rows = connection.execute(
+            f"""
+            SELECT l.verse_id, l.shabad_id,
+                   bm25(line_fts, 0.0, 0.0, ?, ?, ?) AS score
+            FROM line_fts l
+            JOIN shabad_meta m ON m.shabad_id = l.shabad_id
+            WHERE {' AND '.join(where)}
+            ORDER BY score
+            LIMIT ?
+            """,
+            [translation_weight, transliteration_weight, gurmukhi_weight, *params],
+        ).fetchall()
+        connection.close()
+        return [
+            (str(row["verse_id"]), str(row["shabad_id"]), float(-row["score"]))
+            for row in rows
+        ]
 
     def _semantic_ranking(self, query: str, limit: int = 80) -> list[tuple[str, float]]:
         if not self.semantic_search_available:
@@ -411,7 +506,9 @@ class CorpusRetriever:
             for index in indices
         ]
 
-    def _choose_line(self, shabad_id: str, query: str) -> dict[str, Any]:
+    def _choose_line(
+        self, shabad_id: str, query: str, line_ranks: Optional[dict[str, int]] = None
+    ) -> dict[str, Any]:
         rows = self.shabads[shabad_id]
         query_terms = set(_expanded_terms(query))
 
@@ -423,7 +520,11 @@ class CorpusRetriever:
             line_terms = set(_tokens(text))
             overlap = len(query_terms & line_terms) / max(1, len(query_terms))
             substantive = min(len(_tokens(str(row.get("gurmukhi") or ""))), 12) / 12
-            return overlap + 0.08 * substantive, len(line_terms)
+            lexical_hint = 0.0
+            rank = (line_ranks or {}).get(str(row.get("verse_id")))
+            if rank is not None:
+                lexical_hint = 0.6 / (1 + rank)
+            return overlap + lexical_hint + 0.08 * substantive, len(line_terms)
 
         return max(rows, key=score)
 
@@ -433,7 +534,7 @@ class CorpusRetriever:
         explanation: str,
         sparse_score: Optional[float] = None,
         dense_score: Optional[float] = None,
-        rerank_score: Optional[float] = None,
+        fusion_score: Optional[float] = None,
     ) -> SearchResult:
         citation = row.get("citation") or {}
         context = row.get("context")
@@ -462,7 +563,7 @@ class CorpusRetriever:
             ),
             sparse_score=round(sparse_score, 4) if sparse_score is not None else None,
             dense_score=round(dense_score, 4) if dense_score is not None else None,
-            rerank_score=round(rerank_score, 4) if rerank_score is not None else None,
+            fusion_score=round(fusion_score, 4) if fusion_score is not None else None,
             match_explanation=explanation,
         )
 
@@ -477,36 +578,94 @@ class CorpusRetriever:
             if (row.get("citation") or {}).get("source_id")
         ]
 
+    def reader_window(
+        self, verse_id: str, before: int = 20, after: int = 20
+    ) -> tuple[list[SearchResult], bool, bool]:
+        """Return a bounded window in canonical SGGS source order."""
+        position = self.record_positions.get(verse_id)
+        if position is None:
+            return [], False, False
+        start = max(0, position - before)
+        end = min(len(self.records), position + after + 1)
+        lines = [
+            self._to_result(row, "Continuous Sri Guru Granth Sahib Ji reader.")
+            for row in self.records[start:end]
+            if (row.get("citation") or {}).get("source_id")
+        ]
+        return lines, start > 0, end < len(self.records)
+
     def search(self, request: SearchRequest) -> list[SearchResult]:
         query = request.query.strip()
-        lexical = self._lexical_ranking(query, request.filters)
+        profile = self._query_profile(query, request.language_hint)
+        profile_weights = {
+            "gurmukhi": (0.35, 0.5, 2.0),
+            "roman-punjabi": (0.75, 2.0, 0.8),
+            "english": (2.0, 0.5, 0.35),
+        }[profile]
+        combined_lexical = self._lexical_ranking(
+            query, request.filters, (4.0, 2.0, 2.5)
+        )
+        lexical_views = [
+            ("translation", profile_weights[0], self._lexical_ranking(query, request.filters, (1.0, 0.0, 0.0))),
+            ("transliteration", profile_weights[1], self._lexical_ranking(query, request.filters, (0.0, 1.0, 0.0))),
+            ("gurmukhi", profile_weights[2], self._lexical_ranking(query, request.filters, (0.0, 0.0, 1.0))),
+        ]
+        line_lexical = self._line_lexical_ranking(
+            query, request.filters, profile_weights
+        )
+        line_shabad_ranking = list(dict.fromkeys(item[1] for item in line_lexical))
+        line_ranks = {verse_id: rank for rank, (verse_id, _, _) in enumerate(line_lexical, start=1)}
         semantic = self._semantic_ranking(query)
-        lexical_scores = dict(lexical)
+        lexical_scores: dict[str, float] = {}
+        for ranking in [combined_lexical, *(item[2] for item in lexical_views)]:
+            for shabad_id, value in ranking:
+                lexical_scores[shabad_id] = max(lexical_scores.get(shabad_id, value), value)
         semantic_scores = dict(semantic)
 
         # RRF combines ranks rather than incomparable BM25 and cosine score scales.
         fused: dict[str, float] = {}
-        for ranking in (lexical, semantic):
+        # Preserve the proven combined-field baseline as the dominant lexical
+        # signal. Script-specific views and exact-line candidates act as small,
+        # independently measurable tie-breakers rather than replacing it.
+        weighted_rankings = [(1.0, combined_lexical)]
+        view_multiplier = {
+            "english": 0.05,
+            "roman-punjabi": 0.025,
+            "gurmukhi": 0.1,
+        }[profile]
+        weighted_rankings.extend(
+            (view_multiplier * weight, ranking)
+            for _, weight, ranking in lexical_views
+            if weight > 0
+        )
+        weighted_rankings.append((1.0, semantic))
+        line_weight = {
+            "english": 0.2,
+            "roman-punjabi": 0.1,
+            "gurmukhi": 0.05,
+        }[profile]
+        weighted_rankings.append((line_weight, [(shabad_id, 0.0) for shabad_id in line_shabad_ranking]))
+        for weight, ranking in weighted_rankings:
             for rank, (shabad_id, _) in enumerate(ranking, start=1):
-                fused[shabad_id] = fused.get(shabad_id, 0.0) + 1 / (self.RRF_K + rank)
+                fused[shabad_id] = fused.get(shabad_id, 0.0) + weight / (self.RRF_K + rank)
         ranked = sorted(fused, key=fused.get, reverse=True)
 
         results: list[SearchResult] = []
         for shabad_id in ranked:
-            row = self._choose_line(shabad_id, query)
+            row = self._choose_line(shabad_id, query, line_ranks)
             if not self._passes_filters(row, request.filters):
                 continue
             citation = row.get("citation") or {}
             if not citation.get("source_id") or not citation.get("ang"):
                 continue
-            has_lexical = shabad_id in lexical_scores
+            has_lexical = shabad_id in lexical_scores or shabad_id in line_shabad_ranking
             has_semantic = shabad_id in semantic_scores
             if has_lexical and has_semantic:
-                explanation = "Found by both keyword and semantic Shabad search."
+                explanation = f"Found by both {profile} lexical and semantic Shabad search."
             elif has_semantic:
                 explanation = "Found by semantic similarity to the full Shabad."
             else:
-                explanation = "Found by BM25 keyword relevance across the full Shabad."
+                explanation = f"Found by script-aware {profile} BM25 across lines and the full Shabad."
             results.append(
                 self._to_result(
                     row,

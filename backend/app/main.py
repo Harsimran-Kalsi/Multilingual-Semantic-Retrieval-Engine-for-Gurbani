@@ -7,12 +7,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from backend.app.generation import GroundedAnswerGenerator
+from backend.app.feedback import FeedbackStore
 from backend.app.retrieval import CorpusRetriever
 from backend.app.schemas import (
     AskRequest,
     AskResponse,
     GroundedAnswer,
+    FeedbackRequest,
+    FeedbackResponse,
     PassageResponse,
+    ReaderWindowResponse,
     SearchRequest,
     SearchResponse,
 )
@@ -20,6 +24,7 @@ from backend.app.schemas import (
 app = FastAPI(title="Gurbani Semantic Retrieval API", version="0.1.0")
 retriever = CorpusRetriever()
 answer_generator = GroundedAnswerGenerator()
+feedback_store = FeedbackStore()
 frontend_path = Path(__file__).resolve().parents[2] / "frontend" / "index.html"
 
 
@@ -41,6 +46,10 @@ def search(request: SearchRequest) -> SearchResponse:
         query=request.query,
         normalized_query=normalized_query,
         results=results,
+        retrieval_mode=(
+            "hybrid" if any(result.dense_score is not None for result in results)
+            else "keyword"
+        ),
     )
 
 
@@ -50,6 +59,37 @@ def passage(verse_id: str) -> PassageResponse:
     if not lines:
         raise HTTPException(status_code=404, detail="Verse not found")
     return PassageResponse(selected_verse_id=verse_id, lines=lines)
+
+
+@app.get("/reader/{verse_id}", response_model=ReaderWindowResponse)
+def reader_window(
+    verse_id: str, before: int = 20, after: int = 20
+) -> ReaderWindowResponse:
+    if not 0 <= before <= 100 or not 0 <= after <= 100:
+        raise HTTPException(status_code=400, detail="Reader window must be between 0 and 100 lines")
+    lines, has_more_before, has_more_after = retriever.reader_window(
+        verse_id, before=before, after=after
+    )
+    if not lines:
+        raise HTTPException(status_code=404, detail="Verse not found")
+    return ReaderWindowResponse(
+        selected_verse_id=verse_id,
+        lines=lines,
+        has_more_before=has_more_before,
+        has_more_after=has_more_after,
+    )
+
+
+@app.post("/feedback", response_model=FeedbackResponse)
+def feedback(request: FeedbackRequest) -> FeedbackResponse:
+    record = retriever.records_by_id.get(request.verse_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Verse not found")
+    expected_source = (record.get("citation") or {}).get("source_id")
+    if expected_source != request.source_id:
+        raise HTTPException(status_code=400, detail="Source does not match verse")
+    feedback_id = feedback_store.record(request)
+    return FeedbackResponse(recorded=True, feedback_id=feedback_id)
 
 
 @app.post("/ask", response_model=AskResponse)
@@ -71,6 +111,10 @@ def ask(request: AskRequest) -> AskResponse:
             sources=sources,
             generated=True,
             model=answer_generator.model,
+            retrieval_mode=(
+                "hybrid" if any(source.dense_score is not None for source in sources)
+                else "keyword"
+            ),
         )
     except Exception as exc:
         return AskResponse(
@@ -89,4 +133,9 @@ def ask(request: AskRequest) -> AskResponse:
                 if not answer_generator.available
                 else "The model request failed. Check the server API configuration."
             ),
+            retrieval_mode=(
+                "hybrid" if any(source.dense_score is not None for source in sources)
+                else "keyword"
+            ),
         )
+

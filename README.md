@@ -12,6 +12,7 @@ exact Ang and Shabad OS source line.
 - Shows Gurmukhi, transliteration, English translation, Ang, author, Raag, and
   stable source IDs.
 - Opens any result into its complete Shabad context.
+- Collects anonymous Helpful / Not relevant ratings on individual results.
 - Generates an optional plain-language overview using only retrieved passages.
 - Validates generated citation IDs before returning an answer.
 - Supports grounded follow-up questions without treating earlier AI prose as
@@ -35,6 +36,13 @@ The full-text and semantic searches operate at Shabad level so a line can be
 found through its surrounding meaning. The UI and generated answer still cite
 the most relevant exact line. Embeddings are stored in the local SQLite index;
 no hosted vector database is required.
+
+Lexical retrieval uses a combined Shabad-level BM25 baseline plus independently
+weighted English translation, Roman Punjabi transliteration, Gurmukhi, and
+exact-line views. The combined baseline remains dominant; script-aware views
+act only as measured tie-breakers. The API reports `keyword` or `hybrid`
+retrieval explicitly. Its `fusion_score` is the Reciprocal Rank Fusion value,
+not a learned reranker score.
 
 ## Run App
 
@@ -128,6 +136,19 @@ Validate the corpus and run the test suite:
 .venv/bin/python scripts/prepare_corpus.py --input data/sggs.jsonl
 .venv/bin/python -m unittest discover -s tests
 ```
+
+Run the fixed multilingual retrieval comparison:
+
+```bash
+.venv/bin/python scripts/evaluate_retrieval.py
+```
+
+The included `data/eval/sggs_retrieval_silver.jsonl` set contains direct
+Gurmukhi, transliteration, and English correspondences. It is deliberately
+labelled **silver**: it can catch ranking regressions but does not substitute
+for relevance judgments from people qualified to assess interpretive Gurbani
+questions. A learned reranker should not become the default until it improves a
+larger reviewed evaluation set.
 
 ## Scope
 

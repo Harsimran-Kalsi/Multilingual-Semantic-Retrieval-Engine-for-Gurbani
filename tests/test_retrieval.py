@@ -23,6 +23,13 @@ class RetrievalSmokeTests(unittest.TestCase):
         self.assertTrue(results)
         self.assertTrue(any("ਸਿਮਰ" in result.gurmukhi for result in results))
 
+    def test_query_profile_does_not_misclassify_english_aliases(self) -> None:
+        self.assertEqual(
+            self.retriever._query_profile("How can I overcome ego and fear?"),
+            "english",
+        )
+        self.assertEqual(self.retriever._query_profile("haumai"), "roman-punjabi")
+
     def test_passage_returns_complete_shabad_context(self) -> None:
         results = self.search("truth")
         passage = self.retriever.passage(results[0].verse_id)
@@ -39,6 +46,16 @@ class RetrievalSmokeTests(unittest.TestCase):
         )
         shabad_ids = [result.context.shabad_id for result in results]
         self.assertEqual(len(shabad_ids), len(set(shabad_ids)))
+
+    def test_reader_window_follows_canonical_source_order(self) -> None:
+        verse_id = self.retriever.records[100]["verse_id"]
+        lines, has_before, has_after = self.retriever.reader_window(
+            verse_id, before=2, after=3
+        )
+        self.assertEqual(len(lines), 6)
+        self.assertEqual(lines[2].verse_id, verse_id)
+        self.assertTrue(has_before)
+        self.assertTrue(has_after)
 
     def test_service_query_prioritizes_service_passages(self) -> None:
         results = self.retriever.search(
