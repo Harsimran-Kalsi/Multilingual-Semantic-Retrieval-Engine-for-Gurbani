@@ -127,6 +127,24 @@ Runtime schema: `data/schema/verse.schema.json`.
 - `POST /ask` retrieves sources and produces a grounded answer.
 - `GET /passage/{verse_id}` returns the complete Shabad for a selected line.
 - `GET /health` reports server health.
+- `POST /feedback` records a validated local relevance rating.
+
+## Relevance Feedback
+
+Each result card has **Helpful** and **Not relevant** controls. Ratings are
+stored locally in the ignored `data/feedback.sqlite` file together with the
+query, result position, stable source ID, and retrieval scores. No user identity
+is collected.
+
+After collecting ratings, print a compact relevance report:
+
+```bash
+.venv/bin/python scripts/summarize_feedback.py
+```
+
+The report shows the overall helpful rate, performance by result position, and
+queries with the weakest feedback. This creates a small evidence loop for
+improving retrieval rather than tuning it only by intuition.
 
 ## Validation and Tests
 
