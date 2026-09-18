@@ -12,7 +12,7 @@ class GroundingTests(unittest.TestCase):
             SearchRequest(query="How can I overcome ego?", top_k=3)
         )
 
-    def test_only_retrieved_source_ids_survive_validation(self) -> None:
+    def test_mixed_valid_and_invented_citations_reject_the_answer(self) -> None:
         source_id = self.sources[0].citation.source_id
         answer = GroundedAnswer(
             summary="The retrieved passage addresses ego.",
@@ -24,9 +24,32 @@ class GroundingTests(unittest.TestCase):
                 )
             ],
         )
-        validated = GroundedAnswerGenerator._validate_citations(answer, self.sources)
-        self.assertEqual(validated.summary_citation_ids, [source_id])
-        self.assertEqual(validated.statements[0].citation_ids, [source_id])
+        with self.assertRaises(ValueError):
+            GroundedAnswerGenerator._validate_citations(answer, self.sources)
+
+    def test_valid_duplicate_citations_are_deduplicated(self) -> None:
+        source_id = self.sources[0].citation.source_id
+        answer = GroundedAnswer(summary='A cited summary.', summary_citation_ids=[source_id, source_id],
+            statements=[GroundedStatement(text='A cited statement.', citation_ids=[source_id, source_id])])
+        checked = GroundedAnswerGenerator._validate_citations(answer, self.sources)
+        self.assertEqual(checked.summary_citation_ids, [source_id])
+        self.assertEqual(checked.statements[0].citation_ids, [source_id])
+
+    def test_uncited_statement_is_not_silently_dropped(self) -> None:
+        source_id = self.sources[0].citation.source_id
+        answer = GroundedAnswer(summary='Summary.', summary_citation_ids=[source_id], statements=[
+            GroundedStatement(text='Cited.', citation_ids=[source_id]),
+            GroundedStatement(text='Uncited.', citation_ids=[])])
+        with self.assertRaises(ValueError):
+            GroundedAnswerGenerator._validate_citations(answer, self.sources)
+
+    def test_valid_id_does_not_prove_semantic_support(self) -> None:
+        # Deliberately documents the boundary: reference validation is not an
+        # entailment model. Never interpret passing it as hallucination-free.
+        source_id = self.sources[0].citation.source_id
+        answer = GroundedAnswer(summary='An unrelated factual claim.', summary_citation_ids=[source_id],
+            statements=[GroundedStatement(text='Another unrelated claim.', citation_ids=[source_id])])
+        self.assertEqual(GroundedAnswerGenerator._validate_citations(answer, self.sources), answer)
 
     def test_uncited_generated_answer_is_rejected(self) -> None:
         answer = GroundedAnswer(

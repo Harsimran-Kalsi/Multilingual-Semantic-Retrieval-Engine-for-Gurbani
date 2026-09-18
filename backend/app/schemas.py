@@ -1,6 +1,10 @@
-from typing import Optional
+from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints, field_validator
+
+
+QueryText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)]
+QuestionText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=1000)]
 
 
 class TranslationItem(BaseModel):
@@ -16,10 +20,25 @@ class VerseContext(BaseModel):
 
 
 class SearchRequest(BaseModel):
-    query: str = Field(min_length=1, description="User query in English, Roman Punjabi, or Gurmukhi")
+    query: QueryText = Field(description="User query in English, Roman Punjabi, or Gurmukhi")
     top_k: int = Field(default=5, ge=1, le=20)
-    language_hint: Optional[str] = Field(default=None, description="Optional hint: en, pa, pa-guru")
+    mode: Literal['lexical', 'hybrid'] = Field(default='lexical', description='Wording lookup or optional semantic exploration')
+    language_hint: Optional[Literal['en', 'pa', 'pa-guru']] = None
     filters: dict[str, str] = Field(default_factory=dict, description="Metadata filters such as raag/author")
+
+    @field_validator('filters')
+    @classmethod
+    def validate_filters(cls, values: dict[str, str]) -> dict[str, str]:
+        if set(values) - {'ang', 'raag', 'author'}:
+            raise ValueError('Supported filters are ang, raag, and author')
+        cleaned = {key: value.strip() for key, value in values.items()}
+        if any(not value or len(value) > 200 for value in cleaned.values()):
+            raise ValueError('Filter values must contain 1 to 200 characters')
+        if 'ang' in cleaned:
+            if not cleaned['ang'].isdigit() or not 1 <= int(cleaned['ang']) <= 1430:
+                raise ValueError('Ang must be a number from 1 to 1430')
+            cleaned['ang'] = str(int(cleaned['ang']))
+        return cleaned
 
 
 class VerseCitation(BaseModel):
@@ -50,10 +69,11 @@ class SearchResponse(BaseModel):
     normalized_query: str
     results: list[SearchResult]
     retrieval_mode: str
+    requested_mode: str = 'lexical'
 
 
 class FeedbackRequest(BaseModel):
-    query: str = Field(min_length=1, max_length=1000)
+    query: QueryText
     verse_id: str = Field(min_length=1, max_length=100)
     source_id: str = Field(min_length=1, max_length=200)
     result_rank: int = Field(ge=1, le=20)
@@ -81,9 +101,9 @@ class ReaderWindowResponse(BaseModel):
 
 
 class AskRequest(BaseModel):
-    question: str = Field(min_length=2, max_length=1000)
+    question: QuestionText
     top_k: int = Field(default=8, ge=3, le=12)
-    previous_questions: list[str] = Field(default_factory=list, max_length=6)
+    previous_questions: list[QuestionText] = Field(default_factory=list, max_length=6)
 
 
 class GroundedStatement(BaseModel):

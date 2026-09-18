@@ -123,6 +123,10 @@ class CorpusRetriever:
         self._embedding_ids: list[str] = []
         self._embedding_matrix: Any = None
         self._query_embedding_cache: dict[str, Any] = {}
+        self._cache_lock = threading.Lock()
+        self._search_state = threading.local()
+        self.embedding_model = os.getenv('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small')
+        self._embedding_status = 'missing_index'
         self._load_embeddings()
 
     def _load_records(self) -> list[dict[str, Any]]:
@@ -262,29 +266,48 @@ class CorpusRetriever:
             connection.close()
 
     def _load_embeddings(self) -> None:
+        self._embedding_ids = []
+        self._embedding_matrix = None
+        self._query_embedding_cache.clear()
         try:
             import numpy as np
         except ImportError:
             return
         connection = self._connect()
         rows = connection.execute(
-            "SELECT shabad_id, dimensions, vector FROM embeddings ORDER BY shabad_id"
+            "SELECT shabad_id, dimensions, vector FROM embeddings WHERE model=? ORDER BY shabad_id",
+            (self.embedding_model,),
         ).fetchall()
         connection.close()
         if not rows:
+            self._embedding_status = 'missing_model_index'
             return
-        dimensions = int(rows[0]["dimensions"])
-        valid_rows = [
-            row for row in rows
-            if int(row["dimensions"]) == dimensions
-            and len(row["vector"]) == dimensions * 4
-        ]
+        dimensions_set = {int(row['dimensions']) for row in rows}
+        if len(dimensions_set) != 1 or min(dimensions_set) <= 0:
+            self._embedding_status = 'inconsistent_dimensions'
+            return
+        dimensions = dimensions_set.pop()
+        valid_rows, vectors = [], []
+        for row in rows:
+            if row['shabad_id'] not in self.shabads or len(row['vector']) != dimensions * 4:
+                continue
+            vector = np.frombuffer(row['vector'], dtype=np.float32)
+            norm = float(np.linalg.norm(vector))
+            if not np.isfinite(vector).all() or not np.isfinite(norm) or norm <= 0:
+                continue
+            valid_rows.append(row)
+            vectors.append(vector / norm)
         if not valid_rows:
+            self._embedding_status = 'invalid_vectors'
             return
         self._embedding_ids = [str(row["shabad_id"]) for row in valid_rows]
-        self._embedding_matrix = np.vstack(
-            [np.frombuffer(row["vector"], dtype=np.float32) for row in valid_rows]
-        )
+        self._embedding_matrix = np.vstack(vectors)
+        self._embedding_status = 'ready'
+
+    @property
+    def search_diagnostics(self) -> dict[str, Any]:
+        """Per-thread diagnostics, for explicit evaluation rather than shared request state."""
+        return dict(getattr(self._search_state, 'diagnostics', {}))
 
     @property
     def semantic_search_available(self) -> bool:
@@ -316,11 +339,14 @@ class CorpusRetriever:
 
     def build_embeddings(
         self,
-        model: str = "text-embedding-3-small",
+        model: Optional[str] = None,
         dimensions: int = 768,
         batch_size: int = 32,
     ) -> int:
         """Build missing persistent Shabad embeddings. Returns rows added."""
+        model = model or self.embedding_model
+        if dimensions <= 0 or batch_size <= 0:
+            raise ValueError('Embedding dimensions and batch size must be positive')
         from openai import OpenAI
         import numpy as np
 
@@ -351,11 +377,17 @@ class CorpusRetriever:
                 encoding_format="float",
             )
             db_rows = []
-            for (shabad_id, _), item in zip(batch, response.data):
+            ordered = sorted(response.data, key=lambda item: item.index)
+            if [item.index for item in ordered] != list(range(len(batch))):
+                connection.close()
+                raise ValueError('Embedding response does not match the requested batch')
+            for (shabad_id, _), item in zip(batch, ordered):
                 vector = np.asarray(item.embedding, dtype=np.float32)
                 norm = float(np.linalg.norm(vector))
-                if norm:
-                    vector /= norm
+                if vector.shape != (dimensions,) or not np.isfinite(vector).all() or not np.isfinite(norm) or norm <= 0:
+                    connection.close()
+                    raise ValueError('Embedding response contained an invalid vector')
+                vector /= norm
                 db_rows.append(
                     (shabad_id, model, dimensions, vector.tobytes())
                 )
@@ -384,6 +416,21 @@ class CorpusRetriever:
                 return False
         return True
 
+    def _filter_sql(self, filters: dict[str, str]) -> tuple[list[str], list[Any]]:
+        clauses, params = [], []
+        for key in ('author', 'raag'):
+            if filters.get(key):
+                clauses.append(f'LOWER(m.{key}) = LOWER(?)')
+                params.append(filters[key])
+        if filters.get('ang'):
+            # A Shabad may span several Angs. first_ang alone drops legitimate
+            # matches on subsequent pages; retain passages with any matching line.
+            ids = [key for key, rows in self.shabads.items()
+                   if any(self._passes_filters(row, filters) for row in rows)]
+            clauses.append('m.shabad_id IN (' + ','.join('?' for _ in ids) + ')' if ids else '0')
+            params.extend(ids)
+        return clauses, params
+
     @staticmethod
     def _query_profile(query: str, language_hint: Optional[str] = None) -> str:
         if language_hint == "en":
@@ -411,11 +458,9 @@ class CorpusRetriever:
         match = " OR ".join(_fts_term(term) for term in terms)
         where = ["shabad_fts MATCH ?"]
         params: list[Any] = [match]
-        for key, column in (("author", "author"), ("raag", "raag"), ("ang", "first_ang")):
-            value = str(filters.get(key, "")).strip()
-            if value:
-                where.append(f"LOWER(CAST(m.{column} AS TEXT)) = LOWER(?)")
-                params.append(value)
+        clauses, filter_params = self._filter_sql(filters)
+        where.extend(clauses)
+        params.extend(filter_params)
         params.append(limit)
         connection = self._connect()
         translation_weight, transliteration_weight, gurmukhi_weight = field_weights
@@ -443,11 +488,9 @@ class CorpusRetriever:
         match = " OR ".join(_fts_term(term) for term in terms)
         where = ["line_fts MATCH ?"]
         params: list[Any] = [match]
-        for key, column in (("author", "author"), ("raag", "raag"), ("ang", "first_ang")):
-            value = str(filters.get(key, "")).strip()
-            if value:
-                where.append(f"LOWER(CAST(m.{column} AS TEXT)) = LOWER(?)")
-                params.append(value)
+        clauses, filter_params = self._filter_sql(filters)
+        where.extend(clauses)
+        params.extend(filter_params)
         params.append(limit)
         translation_weight, transliteration_weight, gurmukhi_weight = field_weights
         connection = self._connect()
@@ -470,46 +513,58 @@ class CorpusRetriever:
         ]
 
     def _semantic_ranking(self, query: str, limit: int = 80) -> list[tuple[str, float]]:
+        diagnostics = {'semantic_status': 'unavailable', 'embedding_model': self.embedding_model}
+        self._search_state.diagnostics = diagnostics
         if not self.semantic_search_available:
+            diagnostics['semantic_status'] = self._embedding_status if self._embedding_matrix is None else 'missing_api_key'
             return []
         import numpy as np
         from openai import OpenAI
 
-        cache_key = _normalize_text(query)
-        query_vector = self._query_embedding_cache.get(cache_key)
+        cache_key = query.strip()
+        with self._cache_lock:
+            query_vector = self._query_embedding_cache.get(cache_key)
+        diagnostics['query_embedding_cached'] = query_vector is not None
         if query_vector is None:
             try:
-                model = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
                 dimensions = int(self._embedding_matrix.shape[1])
-                response = OpenAI(api_key=os.environ["OPENAI_API_KEY"]).embeddings.create(
-                    model=model,
+                response = OpenAI(api_key=os.environ["OPENAI_API_KEY"], timeout=15.0, max_retries=1).embeddings.create(
+                    model=self.embedding_model,
                     dimensions=dimensions,
                     input=query.strip(),
                     encoding_format="float",
                 )
                 query_vector = np.asarray(response.data[0].embedding, dtype=np.float32)
                 norm = float(np.linalg.norm(query_vector))
-                if norm:
-                    query_vector /= norm
-                if len(self._query_embedding_cache) >= 256:
-                    self._query_embedding_cache.pop(next(iter(self._query_embedding_cache)))
-                self._query_embedding_cache[cache_key] = query_vector
+                if query_vector.shape != (dimensions,) or not np.isfinite(query_vector).all() or not np.isfinite(norm) or norm <= 0:
+                    diagnostics['semantic_status'] = 'invalid_query_vector'
+                    return []
+                query_vector /= norm
+                with self._cache_lock:
+                    if len(self._query_embedding_cache) >= 256:
+                        self._query_embedding_cache.pop(next(iter(self._query_embedding_cache)))
+                    self._query_embedding_cache[cache_key] = query_vector
             except Exception:
                 # Search remains available through local BM25 during API/network issues.
+                diagnostics['semantic_status'] = 'embedding_request_failed'
                 return []
         similarities = np.einsum("ij,j->i", self._embedding_matrix, query_vector)
         count = min(limit, len(similarities))
         indices = np.argpartition(-similarities, count - 1)[:count]
         indices = indices[np.argsort(-similarities[indices])]
+        diagnostics['semantic_status'] = 'ok'
         return [
             (self._embedding_ids[int(index)], float(similarities[int(index)]))
             for index in indices
         ]
 
     def _choose_line(
-        self, shabad_id: str, query: str, line_ranks: Optional[dict[str, int]] = None
+        self, shabad_id: str, query: str, line_ranks: Optional[dict[str, int]] = None,
+        filters: Optional[dict[str, str]] = None,
     ) -> dict[str, Any]:
-        rows = self.shabads[shabad_id]
+        rows = [row for row in self.shabads[shabad_id] if self._passes_filters(row, filters or {})]
+        if not rows:
+            return {}
         query_terms = set(_expanded_terms(query))
 
         def score(row: dict[str, Any]) -> tuple[float, int]:
@@ -594,7 +649,10 @@ class CorpusRetriever:
         ]
         return lines, start > 0, end < len(self.records)
 
-    def search(self, request: SearchRequest) -> list[SearchResult]:
+    def search(self, request: SearchRequest, *, mode: Optional[str] = None) -> list[SearchResult]:
+        mode = mode or request.mode
+        if mode not in {'auto', 'lexical', 'hybrid'}:
+            raise ValueError('Search mode must be auto, lexical, or hybrid')
         query = request.query.strip()
         profile = self._query_profile(query, request.language_hint)
         profile_weights = {
@@ -615,7 +673,11 @@ class CorpusRetriever:
         )
         line_shabad_ranking = list(dict.fromkeys(item[1] for item in line_lexical))
         line_ranks = {verse_id: rank for rank, (verse_id, _, _) in enumerate(line_lexical, start=1)}
-        semantic = self._semantic_ranking(query)
+        if mode == 'lexical':
+            semantic = []
+            self._search_state.diagnostics = {'semantic_status': 'disabled', 'embedding_model': self.embedding_model}
+        else:
+            semantic = self._semantic_ranking(query, limit=len(self._embedding_ids) or 80) if request.filters else self._semantic_ranking(query)
         lexical_scores: dict[str, float] = {}
         for ranking in [combined_lexical, *(item[2] for item in lexical_views)]:
             for shabad_id, value in ranking:
@@ -652,7 +714,7 @@ class CorpusRetriever:
 
         results: list[SearchResult] = []
         for shabad_id in ranked:
-            row = self._choose_line(shabad_id, query, line_ranks)
+            row = self._choose_line(shabad_id, query, line_ranks, request.filters)
             if not self._passes_filters(row, request.filters):
                 continue
             citation = row.get("citation") or {}
@@ -663,7 +725,7 @@ class CorpusRetriever:
             if has_lexical and has_semantic:
                 explanation = f"Found by both {profile} lexical and semantic Shabad search."
             elif has_semantic:
-                explanation = "Found by semantic similarity to the full Shabad."
+                explanation = "Found by semantic similarity to the indexed Shabad context."
             else:
                 explanation = f"Found by script-aware {profile} BM25 across lines and the full Shabad."
             results.append(

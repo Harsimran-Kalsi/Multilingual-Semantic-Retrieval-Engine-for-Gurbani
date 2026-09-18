@@ -46,6 +46,7 @@ def search(request: SearchRequest) -> SearchResponse:
         query=request.query,
         normalized_query=normalized_query,
         results=results,
+        requested_mode=request.mode,
         retrieval_mode=(
             "hybrid" if any(result.dense_score is not None for result in results)
             else "keyword"
@@ -95,7 +96,7 @@ def feedback(request: FeedbackRequest) -> FeedbackResponse:
 @app.post("/ask", response_model=AskResponse)
 def ask(request: AskRequest) -> AskResponse:
     sources = retriever.search(
-        SearchRequest(query=request.question, top_k=request.top_k)
+        SearchRequest(query=request.question, top_k=request.top_k, mode='hybrid')
     )
     if not sources:
         raise HTTPException(status_code=404, detail="No relevant SGGS passages found")

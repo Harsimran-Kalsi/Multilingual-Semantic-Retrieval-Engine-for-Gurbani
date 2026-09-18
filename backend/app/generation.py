@@ -80,26 +80,24 @@ class GroundedAnswerGenerator:
         sources: list[SearchResult],
     ) -> GroundedAnswer:
         allowed = {source.citation.source_id for source in sources}
-        valid_summary_ids = list(dict.fromkeys(
-            source_id
-            for source_id in answer.summary_citation_ids
-            if source_id in allowed
-        ))
-        if not valid_summary_ids:
-            raise ValueError("The generated summary did not contain valid source citations.")
+        # Reject invalid evidence rather than silently stripping references while
+        # retaining the claims they supposedly support. This validates references,
+        # not whether the cited text entails every generated claim.
+        def checked_ids(ids: list[str]) -> list[str]:
+            if not ids or any(source_id not in allowed for source_id in ids):
+                raise ValueError("The generated answer contained missing or invalid source citations.")
+            return list(dict.fromkeys(ids))
+
+        if not answer.summary.strip() or not answer.statements:
+            raise ValueError("The generated answer was empty.")
+        valid_summary_ids = checked_ids(answer.summary_citation_ids)
         statements = []
         for statement in answer.statements:
-            valid_ids = list(dict.fromkeys(
-                source_id
-                for source_id in statement.citation_ids
-                if source_id in allowed
+            if not statement.text.strip():
+                raise ValueError("The generated answer contained an empty statement.")
+            statements.append(GroundedStatement(
+                text=statement.text, citation_ids=checked_ids(statement.citation_ids)
             ))
-            if valid_ids:
-                statements.append(
-                    GroundedStatement(text=statement.text, citation_ids=valid_ids)
-                )
-        if not statements:
-            raise ValueError("The generated answer did not contain valid source citations.")
         return GroundedAnswer(
             summary=answer.summary,
             summary_citation_ids=valid_summary_ids,
@@ -132,7 +130,7 @@ class GroundedAnswerGenerator:
             "Retrieved sources (the only evidence you may use):\n"
             f"{self._source_text(sources)}"
         )
-        client = OpenAI(api_key=self.api_key)
+        client = OpenAI(api_key=self.api_key, timeout=45.0, max_retries=1)
         response = client.responses.create(
             model=self.model,
             instructions=SYSTEM_INSTRUCTIONS,
