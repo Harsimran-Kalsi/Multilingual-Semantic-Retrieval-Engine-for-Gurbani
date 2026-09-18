@@ -1,0 +1,16 @@
+{
+  "question_origin": "assistant_authored_smoke_test",
+  "model": "gpt-5.6-terra",
+  "retrieval_diagnostics": {
+    "semantic_status": "ok",
+    "embedding_model": "text-embedding-3-small",
+    "query_embedding_cached": false
+  },
+  "sources": 5,
+  "generated": true,
+  "summary_citations": 5,
+  "statements": 5,
+  "citation_ids_valid": true,
+  "semantic_entailment_evaluated": false,
+  "elapsed_seconds": 8.815425625
+}

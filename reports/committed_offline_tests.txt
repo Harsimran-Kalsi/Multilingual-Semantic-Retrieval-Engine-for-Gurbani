@@ -1,0 +1,48 @@
+test_feedback_rejects_forged_source_and_records_valid_result (test_api.ApiBehaviorTests) ... ok
+test_generation_failure_returns_sources_without_provider_details (test_api.ApiBehaviorTests) ... ok
+test_input_limits_and_whitespace (test_api.ApiBehaviorTests) ... ok
+test_invalid_citation_generation_falls_back_to_sources (test_api.ApiBehaviorTests) ... ok
+test_requested_meaning_search_reports_lexical_fallback (test_api.ApiBehaviorTests) ... ok
+test_search_to_passage_and_reader_workflow (test_api.ApiBehaviorTests) ... ok
+test_wording_lookup_stays_lexical_even_with_credentials (test_api.ApiBehaviorTests) ... ok
+test_invalid_corpus_fails_command (test_corpus_validation.CorpusValidationTests) ... ok
+test_valid_corpus_passes_command (test_corpus_validation.CorpusValidationTests) ... ok
+test_checked_in_benchmark_has_balanced_explicit_provenance (test_eval_data.EvaluationDataTests) ... ok
+test_generator_is_reproducible_and_handles_duplicate_source_text (test_eval_data.EvaluationDataTests) ... ok
+test_realistic_question_pack_is_unjudged (test_eval_data.EvaluationDataTests) ... ok
+test_duplicate_results_do_not_inflate_recall (test_evaluation_metrics.EvaluationMetricTests) ... ok
+test_hit_rate_and_recall_are_distinct_for_multiple_targets (test_evaluation_metrics.EvaluationMetricTests) ... ok
+test_invalid_judgment_files_are_rejected (test_evaluation_metrics.EvaluationMetricTests) ... ok
+test_mrr_and_graded_ndcg_have_known_values (test_evaluation_metrics.EvaluationMetricTests) ... ok
+test_percentile_interpolates_and_handles_empty_samples (test_evaluation_metrics.EvaluationMetricTests) ... ok
+test_unjudged_questions_produce_no_quality_metrics (test_evaluation_metrics.EvaluationMetricTests) ... ok
+test_legacy_rerank_score_is_migrated_to_fusion_score (test_feedback.FeedbackStoreTests) ... ok
+test_record_and_summary (test_feedback.FeedbackStoreTests) ... ok
+test_mixed_valid_and_invented_citations_reject_the_answer (test_generation.GroundingTests) ... ok
+test_uncited_generated_answer_is_rejected (test_generation.GroundingTests) ... ok
+test_uncited_statement_is_not_silently_dropped (test_generation.GroundingTests) ... ok
+test_valid_duplicate_citations_are_deduplicated (test_generation.GroundingTests) ... ok
+test_valid_id_does_not_prove_semantic_support (test_generation.GroundingTests) ... ok
+test_gurmukhi_query_returns_cited_results (test_retrieval.RetrievalSmokeTests) ... ok
+test_passage_returns_complete_shabad_context (test_retrieval.RetrievalSmokeTests) ... ok
+test_query_profile_does_not_misclassify_english_aliases (test_retrieval.RetrievalSmokeTests) ... ok
+test_reader_window_follows_canonical_source_order (test_retrieval.RetrievalSmokeTests) ... ok
+test_results_are_diverse_by_shabad (test_retrieval.RetrievalSmokeTests) ... ok
+test_roman_punjabi_alias_is_supported (test_retrieval.RetrievalSmokeTests) ... ok
+test_service_query_prioritizes_service_passages (test_retrieval.RetrievalSmokeTests) ... ok
+test_multiview_retrieval_beats_or_matches_legacy_by_language (test_retrieval_evaluation.RetrievalEvaluationTests) ... ok
+test_ang_filter_finds_later_page_of_passage (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+test_bad_query_vectors_fall_back_without_nan_scores (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+test_dense_and_keyword_signals_both_reach_fusion (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+test_dense_ranking_uses_cosine_and_cache (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+test_dense_results_choose_line_matching_ang_filter (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+test_embedding_batch_rejects_duplicate_response_indices (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+test_index_from_different_model_is_not_used (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+test_invalid_persisted_vectors_are_excluded (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+test_lexical_mode_never_calls_embedding_provider (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+test_provider_failure_preserves_keyword_results (test_semantic_retrieval.SemanticRetrievalTests) ... ok
+
+----------------------------------------------------------------------
+Ran 43 tests in 4.432s
+
+OK

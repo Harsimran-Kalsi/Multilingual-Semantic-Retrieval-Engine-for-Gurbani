@@ -1,0 +1,982 @@
+[
+  {
+    "query": "mann jeetay jag jeet",
+    "results": [
+      {
+        "verse_id": "shabados:UNDR",
+        "gurmukhi": "ਆਈ ਪੰਥੀ ਸਗਲ ਜਮਾਤੀ; ਮਨਿ ਜੀਤੈ ਜਗੁ ਜੀਤੁ ॥",
+        "transliteration": "aaee panthee sagal jamaatee; man jeetai jag jeet |",
+        "translation": "See the brotherhood of all mankind as the highest order of Yogis; conquer your own mind, and conquer the world.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "See the brotherhood of all mankind as the highest order of Yogis; conquer your own mind, and conquer the world.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "DJQ",
+          "line_type": "Pankti",
+          "section_description": "Revealed by Guru Nanak Dev Ji in the 15th century, Jap Ji Sahib is the deepest exegesis of God. A universal hymn that opens with the Mool Mantar, has 38 pauries and 2 saloks, it describes God in the purest form."
+        },
+        "citation": {
+          "ang": 6,
+          "raag": "Jap",
+          "author": "Guru Nanak Dev Ji",
+          "source_id": "shabados:4.8.7:line:UNDR",
+          "line_start": 17,
+          "line_end": 17
+        },
+        "sparse_score": 12.4339,
+        "dense_score": null,
+        "fusion_score": 0.0217,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:X9DF",
+        "gurmukhi": "ਜਿਹਿ ਪ੍ਰਾਨੀ. ਹਰਿ ਜਸੁ ਕਹਿਓ; ਨਾਨਕ. ਤਿਹਿ ਜਗੁ ਜੀਤਿ ॥੪੨॥",
+        "transliteration": "jihi praanee. har jas kahio; naanak. tihi jag jeet |42|",
+        "translation": "That mortal who chants the Praises of the Lord, O Nanak, conquers the world. ||42||",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "That mortal who chants the Praises of the Lord, O Nanak, conquers the world. ||42||",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "0W2",
+          "line_type": "Pankti",
+          "section_description": "Verses Of Guru Tegh Bahadur"
+        },
+        "citation": {
+          "ang": 1428,
+          "raag": "Salok Ninth Mehl",
+          "author": "Guru Tegh Bahadur Ji",
+          "source_id": "shabados:4.8.7:line:X9DF",
+          "line_start": 14,
+          "line_end": 14
+        },
+        "sparse_score": 13.9206,
+        "dense_score": null,
+        "fusion_score": 0.02,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:DNJC",
+        "gurmukhi": "ਜੀਤਿ ਜੀਤਿ. ਜੀਤੇ ਸਭਿ ਥਾਨਾ; ਸਗਲ ਭਵਨ ਲਪਟਹੀ ॥",
+        "transliteration": "jeet jeet. jeete sabh thaanaa; sagal bhavan lapattahee |",
+        "translation": "Conquering and conquering, she has conquered everywhere, and she clings to the whole world.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "Conquering and conquering, she has conquered everywhere, and she clings to the whole world.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "FQG",
+          "line_type": "Pankti",
+          "section_description": "If there is a perfect simile for Raag Gujari, it would be that of a person isolated in the desert, who has their hands cupped, holding water. However, it is only when the water begins to slowly seep through their joined hands that the person comes to realise the real value and importance of the water. Similarly Raag Gujari leads the listener to realise and become aware of passing time and in this way comes to value the precious nature of time itself. The revelation brings the listener to an awareness and admission of their own death and mortality, making them utilise their remaining ‘life time’ more wisely."
+        },
+        "citation": {
+          "ang": 499,
+          "raag": "Raag Gujri",
+          "author": "Guru Arjan Dev Ji",
+          "source_id": "shabados:4.8.7:line:DNJC",
+          "line_start": 2,
+          "line_end": 2
+        },
+        "sparse_score": 9.5739,
+        "dense_score": null,
+        "fusion_score": 0.0193,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:ELK3",
+        "gurmukhi": "ਮਨੁ ਤਨੁ ਜੀਤਿ; ਸਬਦੁ ਲੈ ਲਾਹਾ ॥",
+        "transliteration": "man tan jeet; sabad lai laahaa |",
+        "translation": "Conquering mind and body, I have earned the profit of the Shabad.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "Conquering mind and body, I have earned the profit of the Shabad.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "8P3",
+          "line_type": "Pankti",
+          "section_description": "Jaitsiri conveys the heartfelt emotion of not being able to live without someone. Its mood is preoccupied with feelings of dependence and an overwhelming sense of desperately reaching out to be with that person."
+        },
+        "citation": {
+          "ang": 699,
+          "raag": "Raag Jaithsree",
+          "author": "Guru Ramdas Ji",
+          "source_id": "shabados:4.8.7:line:ELK3",
+          "line_start": 5,
+          "line_end": 5
+        },
+        "sparse_score": 10.1999,
+        "dense_score": null,
+        "fusion_score": 0.019,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:YA95",
+        "gurmukhi": "ਫਾਹੇ ਕਾਟੇ. ਮਿਟੇ ਗਵਨ; ਫਤਿਹ ਭਈ ਮਨਿ ਜੀਤ ॥",
+        "transliteration": "faahe kaatte. mitte gavan; fatih bhee man jeet |",
+        "translation": "The noose of Death is cut, and one's wanderings cease; victory is obtained, when one conquers his own mind.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "The noose of Death is cut, and one's wanderings cease; victory is obtained, when one conquers his own mind.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "ZQR",
+          "line_type": "Pankti",
+          "section_description": "Gauri creates a mood where the listener is encouraged to strive harder in order to achieve an objective. However, the encouragement given by the Raag does not allow the ego to increase. This therefore creates the atmosphere where the listener is encouraged, but still prevented from becoming arrogant and self-important."
+        },
+        "citation": {
+          "ang": 258,
+          "raag": "Raag Gauree",
+          "author": "Guru Arjan Dev Ji",
+          "source_id": "shabados:4.8.7:line:YA95",
+          "line_start": 5,
+          "line_end": 5
+        },
+        "sparse_score": 9.2844,
+        "dense_score": null,
+        "fusion_score": 0.0188,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:HCV5",
+        "gurmukhi": "ਤਰਨਾਪੋ. ਇਉ ਹੀ ਗਇਓ; ਲੀਓ ਜਰਾ ਤਨੁ ਜੀਤਿ ॥",
+        "transliteration": "taranaapo. iau hee geo; leeo jaraa tan jeet |",
+        "translation": "Your youth has passed away like this, and old age has overtaken your body.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "Your youth has passed away like this, and old age has overtaken your body.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "LK1",
+          "line_type": "Pankti",
+          "section_description": "Verses Of Guru Tegh Bahadur"
+        },
+        "citation": {
+          "ang": 1426,
+          "raag": "Salok Ninth Mehl",
+          "author": "Guru Tegh Bahadur Ji",
+          "source_id": "shabados:4.8.7:line:HCV5",
+          "line_start": 12,
+          "line_end": 12
+        },
+        "sparse_score": 9.4934,
+        "dense_score": null,
+        "fusion_score": 0.0184,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:347R",
+        "gurmukhi": "ਭ੍ਰਮ ਭੀਤਿ; ਜੀਤਿ ਮਿਟਾਵਉ ॥",
+        "transliteration": "bhram bheet; jeet mittaavau |",
+        "translation": "I have captured and demolished the walls of doubt.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "I have captured and demolished the walls of doubt.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "BP1",
+          "line_type": "Pankti",
+          "section_description": "Aasaa has strong emotions of inspiration and courage. This Raag gives the listener the determination and ambition to put aside any excuses and to proceed with the necessary action to achieve the aim. It generates feelings of passion and zeal to succeed and the energy generated from these feelings enables the listener to find the strength from within to achieve success, even when the achievement seems difficult. The determined mood of this Raag ensures that failure is not an option and motivates the listener to be inspired."
+        },
+        "citation": {
+          "ang": 408,
+          "raag": "Raag Aasaa",
+          "author": "Guru Arjan Dev Ji",
+          "source_id": "shabados:4.8.7:line:347R",
+          "line_start": 18,
+          "line_end": 18
+        },
+        "sparse_score": 8.3109,
+        "dense_score": null,
+        "fusion_score": 0.0183,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:HMAN",
+        "gurmukhi": "ਜਨਮੁ ਜੀਤਿ; ਲਾਹਾ ਨਾਮੁ ਪਾਇ ॥੧॥ ਰਹਾਉ ॥",
+        "transliteration": "janam jeet; laahaa naam paae |1| rahaau |",
+        "translation": "Be victorious in the game of life, and earn the profit of the Naam. ||1||Pause||",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "Be victorious in the game of life, and earn the profit of the Naam. ||1||Pause||",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "KBV",
+          "line_type": "Rahao",
+          "section_description": "Gauri creates a mood where the listener is encouraged to strive harder in order to achieve an objective. However, the encouragement given by the Raag does not allow the ego to increase. This therefore creates the atmosphere where the listener is encouraged, but still prevented from becoming arrogant and self-important."
+        },
+        "citation": {
+          "ang": 162,
+          "raag": "Raag Gauree",
+          "author": "Guru Amardas Ji",
+          "source_id": "shabados:4.8.7:line:HMAN",
+          "line_start": 3,
+          "line_end": 3
+        },
+        "sparse_score": 7.5406,
+        "dense_score": null,
+        "fusion_score": 0.018,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      }
+    ]
+  },
+  {
+    "query": "man jeetai jag jeet",
+    "results": [
+      {
+        "verse_id": "shabados:UNDR",
+        "gurmukhi": "ਆਈ ਪੰਥੀ ਸਗਲ ਜਮਾਤੀ; ਮਨਿ ਜੀਤੈ ਜਗੁ ਜੀਤੁ ॥",
+        "transliteration": "aaee panthee sagal jamaatee; man jeetai jag jeet |",
+        "translation": "See the brotherhood of all mankind as the highest order of Yogis; conquer your own mind, and conquer the world.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "See the brotherhood of all mankind as the highest order of Yogis; conquer your own mind, and conquer the world.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "DJQ",
+          "line_type": "Pankti",
+          "section_description": "Revealed by Guru Nanak Dev Ji in the 15th century, Jap Ji Sahib is the deepest exegesis of God. A universal hymn that opens with the Mool Mantar, has 38 pauries and 2 saloks, it describes God in the purest form."
+        },
+        "citation": {
+          "ang": 6,
+          "raag": "Jap",
+          "author": "Guru Nanak Dev Ji",
+          "source_id": "shabados:4.8.7:line:UNDR",
+          "line_start": 17,
+          "line_end": 17
+        },
+        "sparse_score": 24.3193,
+        "dense_score": null,
+        "fusion_score": 0.0203,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:X9DF",
+        "gurmukhi": "ਜਿਹਿ ਪ੍ਰਾਨੀ. ਹਰਿ ਜਸੁ ਕਹਿਓ; ਨਾਨਕ. ਤਿਹਿ ਜਗੁ ਜੀਤਿ ॥੪੨॥",
+        "transliteration": "jihi praanee. har jas kahio; naanak. tihi jag jeet |42|",
+        "translation": "That mortal who chants the Praises of the Lord, O Nanak, conquers the world. ||42||",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "That mortal who chants the Praises of the Lord, O Nanak, conquers the world. ||42||",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "0W2",
+          "line_type": "Pankti",
+          "section_description": "Verses Of Guru Tegh Bahadur"
+        },
+        "citation": {
+          "ang": 1428,
+          "raag": "Salok Ninth Mehl",
+          "author": "Guru Tegh Bahadur Ji",
+          "source_id": "shabados:4.8.7:line:X9DF",
+          "line_start": 14,
+          "line_end": 14
+        },
+        "sparse_score": 13.9206,
+        "dense_score": null,
+        "fusion_score": 0.0195,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:4Y0V",
+        "gurmukhi": "ਕਹਤ ਕਬੀਰ; ਬਹੂ ਤਬ ਜੀਤੈ ॥",
+        "transliteration": "kehat kabeer; bahoo tab jeetai |",
+        "translation": "Says Kabeer, the soul-bride shall win,",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "Says Kabeer, the soul-bride shall win,",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "PMX",
+          "line_type": "Pankti",
+          "section_description": "Aasaa has strong emotions of inspiration and courage. This Raag gives the listener the determination and ambition to put aside any excuses and to proceed with the necessary action to achieve the aim. It generates feelings of passion and zeal to succeed and the energy generated from these feelings enables the listener to find the strength from within to achieve success, even when the achievement seems difficult. The determined mood of this Raag ensures that failure is not an option and motivates the listener to be inspired."
+        },
+        "citation": {
+          "ang": 484,
+          "raag": "Raag Aasaa",
+          "author": "Bhagat Kabir Ji",
+          "source_id": "shabados:4.8.7:line:4Y0V",
+          "line_start": 6,
+          "line_end": 6
+        },
+        "sparse_score": 10.8462,
+        "dense_score": null,
+        "fusion_score": 0.0192,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:RU79",
+        "gurmukhi": "ਣਾਣਾ. ਰਣ ਤੇ ਸੀਝੀਐ; ਆਤਮ ਜੀਤੈ ਕੋਇ ॥",
+        "transliteration": "naanaa. ran te seejheeai; aatam jeetai koe |",
+        "translation": "NANNA: One who conquers his own soul, wins the battle of life.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "NANNA: One who conquers his own soul, wins the battle of life.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "QG4",
+          "line_type": "Pankti",
+          "section_description": "Gauri creates a mood where the listener is encouraged to strive harder in order to achieve an objective. However, the encouragement given by the Raag does not allow the ego to increase. This therefore creates the atmosphere where the listener is encouraged, but still prevented from becoming arrogant and self-important."
+        },
+        "citation": {
+          "ang": 256,
+          "raag": "Raag Gauree",
+          "author": "Guru Arjan Dev Ji",
+          "source_id": "shabados:4.8.7:line:RU79",
+          "line_start": 14,
+          "line_end": 14
+        },
+        "sparse_score": 13.1917,
+        "dense_score": null,
+        "fusion_score": 0.0192,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:ELK3",
+        "gurmukhi": "ਮਨੁ ਤਨੁ ਜੀਤਿ; ਸਬਦੁ ਲੈ ਲਾਹਾ ॥",
+        "transliteration": "man tan jeet; sabad lai laahaa |",
+        "translation": "Conquering mind and body, I have earned the profit of the Shabad.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "Conquering mind and body, I have earned the profit of the Shabad.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "8P3",
+          "line_type": "Pankti",
+          "section_description": "Jaitsiri conveys the heartfelt emotion of not being able to live without someone. Its mood is preoccupied with feelings of dependence and an overwhelming sense of desperately reaching out to be with that person."
+        },
+        "citation": {
+          "ang": 699,
+          "raag": "Raag Jaithsree",
+          "author": "Guru Ramdas Ji",
+          "source_id": "shabados:4.8.7:line:ELK3",
+          "line_start": 5,
+          "line_end": 5
+        },
+        "sparse_score": 10.5602,
+        "dense_score": null,
+        "fusion_score": 0.0188,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:DNJC",
+        "gurmukhi": "ਜੀਤਿ ਜੀਤਿ. ਜੀਤੇ ਸਭਿ ਥਾਨਾ; ਸਗਲ ਭਵਨ ਲਪਟਹੀ ॥",
+        "transliteration": "jeet jeet. jeete sabh thaanaa; sagal bhavan lapattahee |",
+        "translation": "Conquering and conquering, she has conquered everywhere, and she clings to the whole world.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "Conquering and conquering, she has conquered everywhere, and she clings to the whole world.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "FQG",
+          "line_type": "Pankti",
+          "section_description": "If there is a perfect simile for Raag Gujari, it would be that of a person isolated in the desert, who has their hands cupped, holding water. However, it is only when the water begins to slowly seep through their joined hands that the person comes to realise the real value and importance of the water. Similarly Raag Gujari leads the listener to realise and become aware of passing time and in this way comes to value the precious nature of time itself. The revelation brings the listener to an awareness and admission of their own death and mortality, making them utilise their remaining ‘life time’ more wisely."
+        },
+        "citation": {
+          "ang": 499,
+          "raag": "Raag Gujri",
+          "author": "Guru Arjan Dev Ji",
+          "source_id": "shabados:4.8.7:line:DNJC",
+          "line_start": 2,
+          "line_end": 2
+        },
+        "sparse_score": 9.5739,
+        "dense_score": null,
+        "fusion_score": 0.0185,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:YA95",
+        "gurmukhi": "ਫਾਹੇ ਕਾਟੇ. ਮਿਟੇ ਗਵਨ; ਫਤਿਹ ਭਈ ਮਨਿ ਜੀਤ ॥",
+        "transliteration": "faahe kaatte. mitte gavan; fatih bhee man jeet |",
+        "translation": "The noose of Death is cut, and one's wanderings cease; victory is obtained, when one conquers his own mind.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "The noose of Death is cut, and one's wanderings cease; victory is obtained, when one conquers his own mind.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "ZQR",
+          "line_type": "Pankti",
+          "section_description": "Gauri creates a mood where the listener is encouraged to strive harder in order to achieve an objective. However, the encouragement given by the Raag does not allow the ego to increase. This therefore creates the atmosphere where the listener is encouraged, but still prevented from becoming arrogant and self-important."
+        },
+        "citation": {
+          "ang": 258,
+          "raag": "Raag Gauree",
+          "author": "Guru Arjan Dev Ji",
+          "source_id": "shabados:4.8.7:line:YA95",
+          "line_start": 5,
+          "line_end": 5
+        },
+        "sparse_score": 9.6194,
+        "dense_score": null,
+        "fusion_score": 0.0181,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:347R",
+        "gurmukhi": "ਭ੍ਰਮ ਭੀਤਿ; ਜੀਤਿ ਮਿਟਾਵਉ ॥",
+        "transliteration": "bhram bheet; jeet mittaavau |",
+        "translation": "I have captured and demolished the walls of doubt.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "I have captured and demolished the walls of doubt.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "BP1",
+          "line_type": "Pankti",
+          "section_description": "Aasaa has strong emotions of inspiration and courage. This Raag gives the listener the determination and ambition to put aside any excuses and to proceed with the necessary action to achieve the aim. It generates feelings of passion and zeal to succeed and the energy generated from these feelings enables the listener to find the strength from within to achieve success, even when the achievement seems difficult. The determined mood of this Raag ensures that failure is not an option and motivates the listener to be inspired."
+        },
+        "citation": {
+          "ang": 408,
+          "raag": "Raag Aasaa",
+          "author": "Guru Arjan Dev Ji",
+          "source_id": "shabados:4.8.7:line:347R",
+          "line_start": 18,
+          "line_end": 18
+        },
+        "sparse_score": 8.3109,
+        "dense_score": null,
+        "fusion_score": 0.0176,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      }
+    ]
+  },
+  {
+    "query": "hukam rajai chalna",
+    "results": [
+      {
+        "verse_id": "shabados:9ZUY",
+        "gurmukhi": "ਹੁਕਮਿ ਮਰੈ; ਹੁਕਮੇ ਹੀ ਜੀਵੈ ॥",
+        "transliteration": "hukam marai; hukame hee jeevai |",
+        "translation": "By the Hukam of the Lord's Command, they die; by the Hukam of His Command, they live.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "By the Hukam of the Lord's Command, they die; by the Hukam of His Command, they live.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "93G",
+          "line_type": "Pankti",
+          "section_description": "The emotions in Ramkali are like those of a wise teacher disciplining their student. The student is aware of the pain of learning, but is still conscious of the fact that ultimately it is for the best. In this way Ramkali conveys the change from all that we are familiar with, to something we are certain will be better."
+        },
+        "citation": {
+          "ang": 962,
+          "raag": "Raag Raamkalee",
+          "author": "Guru Arjan Dev Ji",
+          "source_id": "shabados:4.8.7:line:9ZUY",
+          "line_start": 15,
+          "line_end": 15
+        },
+        "sparse_score": 30.9879,
+        "dense_score": null,
+        "fusion_score": 0.0209,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:8U8E",
+        "gurmukhi": "ਕਥਨੀ ਬਦਨੀ ਕਰਤਾ ਫਿਰੈ; ਹੁਕਮੁ. ਨ ਬੂਝੈ ਸਚੁ ॥",
+        "transliteration": "kathanee badanee karataa firai; hukam. na boojhai sach |",
+        "translation": "One who merely mouths the words, does not understand the Hukam of the True Lord's Command.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "One who merely mouths the words, does not understand the Hukam of the True Lord's Command.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "NDU",
+          "line_type": "Pankti",
+          "section_description": "The emotions in Ramkali are like those of a wise teacher disciplining their student. The student is aware of the pain of learning, but is still conscious of the fact that ultimately it is for the best. In this way Ramkali conveys the change from all that we are familiar with, to something we are certain will be better."
+        },
+        "citation": {
+          "ang": 950,
+          "raag": "Raag Raamkalee",
+          "author": "Guru Amardas Ji",
+          "source_id": "shabados:4.8.7:line:8U8E",
+          "line_start": 15,
+          "line_end": 15
+        },
+        "sparse_score": 31.5913,
+        "dense_score": null,
+        "fusion_score": 0.0194,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:D4JM",
+        "gurmukhi": "ਨਾਨਕ. ਹੁਕਮੁ ਕੋ ਗੁਰਮੁਖਿ ਬੁਝੈ; ਜਿਸ ਨੋ ਕਿਰਪਾ ਕਰੇ ਰਜਾਇ ॥੧॥",
+        "transliteration": "naanak. hukam ko guramukh bujhai; jis no kirapaa kare rajaae |1|",
+        "translation": "O Nanak, the Gurmukh understands the Hukam of the Lord's Command; the Lord showers His Mercy upon him. ||1||",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "O Nanak, the Gurmukh understands the Hukam of the Lord's Command; the Lord showers His Mercy upon him. ||1||",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "810",
+          "line_type": "Pankti",
+          "section_description": "The mood of Bihagara is that of extreme sadness and pain, which gives rise to the need to find peace and understanding. The heightened emotional state of sadness is only harnessed by the craving for truth and meaning."
+        },
+        "citation": {
+          "ang": 556,
+          "raag": "Raag Bihaagraa",
+          "author": "Guru Amardas Ji",
+          "source_id": "shabados:4.8.7:line:D4JM",
+          "line_start": 14,
+          "line_end": 14
+        },
+        "sparse_score": 32.2225,
+        "dense_score": null,
+        "fusion_score": 0.0194,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:5360",
+        "gurmukhi": "ਹੁਕਮੇ ਹੋਆ; ਹੁਕਮੇ ਵਰਤਾਰਾ ॥੧॥ ਰਹਾਉ ॥",
+        "transliteration": "hukame hoaa; hukame varataaraa |1| rahaau |",
+        "translation": "The Hukam of the Lord's Command is pervasive; by the Hukam of His Command, all things happen. ||1||Pause||",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "The Hukam of the Lord's Command is pervasive; by the Hukam of His Command, all things happen. ||1||Pause||",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "1YA",
+          "line_type": "Rahao",
+          "section_description": "Bhairao embodies the soul’s faith and heartfelt devotion towards The Creator. It is a kind of fanaticism, where there is a feeling of not being aware or caring about anything else. The emotions conveyed are those of contentment and of being absorbed in a steadfast belief or faith. In this Raag, the soul is relaying the happiness that the mind could potentially experience if it joined in with this devotion."
+        },
+        "citation": {
+          "ang": 1128,
+          "raag": "Raag Bhairao",
+          "author": "Guru Amardas Ji",
+          "source_id": "shabados:4.8.7:line:5360",
+          "line_start": 10,
+          "line_end": 10
+        },
+        "sparse_score": 30.1887,
+        "dense_score": null,
+        "fusion_score": 0.0193,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:BJJG",
+        "gurmukhi": "ਪਉਣੁ ਪਾਣੀ ਬੈਸੰਤਰੋ; ਹੁਕਮਿ ਕਰਹਿ ਭਗਤੀ ॥",
+        "transliteration": "paun paanee baisantaro; hukam kareh bhagatee |",
+        "translation": "Water, air and fire, by His Will, worship Him.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "Water, air and fire, by His Will, worship Him.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "5UR",
+          "line_type": "Pankti",
+          "section_description": "The emotions in Ramkali are like those of a wise teacher disciplining their student. The student is aware of the pain of learning, but is still conscious of the fact that ultimately it is for the best. In this way Ramkali conveys the change from all that we are familiar with, to something we are certain will be better."
+        },
+        "citation": {
+          "ang": 948,
+          "raag": "Raag Raamkalee",
+          "author": "Guru Amardas Ji",
+          "source_id": "shabados:4.8.7:line:BJJG",
+          "line_start": 7,
+          "line_end": 7
+        },
+        "sparse_score": 31.1495,
+        "dense_score": null,
+        "fusion_score": 0.019,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:TW28",
+        "gurmukhi": "ਹੁਕਮੇ ਆਇਆ ਹੁਕਮਿ ਸਮਾਇਆ ॥",
+        "transliteration": "hukame aaeaa hukam samaaeaa |",
+        "translation": "By His Command we come, and by His command we merge into Him again.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "By His Command we come, and by His command we merge into Him again.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "RUS",
+          "line_type": "Pankti",
+          "section_description": "Maru was traditionally sung on the battlefield in preparation for war. This Raag has an aggressive nature, which creates an inner strength and power to express and emphasise the truth, regardless of the consequences. Maru’s nature conveys the fearlessness and strength that ensures the truth is spoken, no matter what the cost."
+        },
+        "citation": {
+          "ang": 1037,
+          "raag": "Raag Maaroo",
+          "author": "Guru Nanak Dev Ji",
+          "source_id": "shabados:4.8.7:line:TW28",
+          "line_start": 1,
+          "line_end": 1
+        },
+        "sparse_score": 29.8569,
+        "dense_score": null,
+        "fusion_score": 0.0186,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:H2J5",
+        "gurmukhi": "ਹੁਕਮੀ ਆਇਆ. ਹੁਕਮੁ ਨ ਬੂਝੈ; ਹੁਕਮਿ ਸਵਾਰਣਹਾਰਾ ॥",
+        "transliteration": "hukamee aaeaa. hukam na boojhai; hukam savaaranahaaraa |",
+        "translation": "By the Hukam of the Lord's Command, he comes, but he does not understand this Hukam; the Lord's Hukam is the Embellisher.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "By the Hukam of the Lord's Command, he comes, but he does not understand this Hukam; the Lord's Hukam is the Embellisher.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "8ES",
+          "line_type": "Pankti",
+          "section_description": "Dhanasari is a sense of being completely carefree. This sensation arises from a feeling of contentment and ‘richness’ from the things we have in our lives and gives the listener a positive and optimistic attitude towards the future."
+        },
+        "citation": {
+          "ang": 688,
+          "raag": "Raag Dhanaasree",
+          "author": "Guru Nanak Dev Ji",
+          "source_id": "shabados:4.8.7:line:H2J5",
+          "line_start": 15,
+          "line_end": 15
+        },
+        "sparse_score": 29.7733,
+        "dense_score": null,
+        "fusion_score": 0.0186,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:ETB0",
+        "gurmukhi": "ਹੁਕਮੇ ਆਵੈ; ਹੁਕਮੇ ਜਾਇ ॥",
+        "transliteration": "hukame aavai; hukame jaae |",
+        "translation": "By the Hukam of His Command we come, and by the Hukam of His Command we go.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "By the Hukam of His Command we come, and by the Hukam of His Command we go.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "J6W",
+          "line_type": "Pankti",
+          "section_description": "Gauri creates a mood where the listener is encouraged to strive harder in order to achieve an objective. However, the encouragement given by the Raag does not allow the ego to increase. This therefore creates the atmosphere where the listener is encouraged, but still prevented from becoming arrogant and self-important."
+        },
+        "citation": {
+          "ang": 151,
+          "raag": "Raag Gauree",
+          "author": "Guru Nanak Dev Ji",
+          "source_id": "shabados:4.8.7:line:ETB0",
+          "line_start": 10,
+          "line_end": 10
+        },
+        "sparse_score": 29.7168,
+        "dense_score": null,
+        "fusion_score": 0.0183,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      }
+    ]
+  },
+  {
+    "query": "hukam rajaaee chalanaa",
+    "results": [
+      {
+        "verse_id": "shabados:H0PC",
+        "gurmukhi": "ਹੁਕਮਿ ਰਜਾਈ ਚਲਣਾ; ਨਾਨਕ. ਲਿਖਿਆ ਨਾਲਿ ॥੧॥",
+        "transliteration": "hukam rajaaee chalanaa; naanak. likhiaa naal |1|",
+        "translation": "O Nanak, it is written that you shall obey the Hukam of His Command, and walk in the Way of His Will. ||1||",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "O Nanak, it is written that you shall obey the Hukam of His Command, and walk in the Way of His Will. ||1||",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "DMP",
+          "line_type": "Pankti",
+          "section_description": "Revealed by Guru Nanak Dev Ji in the 15th century, Jap Ji Sahib is the deepest exegesis of God. A universal hymn that opens with the Mool Mantar, has 38 pauries and 2 saloks, it describes God in the purest form."
+        },
+        "citation": {
+          "ang": 1,
+          "raag": "Jap",
+          "author": "Guru Nanak Dev Ji",
+          "source_id": "shabados:4.8.7:line:H0PC",
+          "line_start": 7,
+          "line_end": 7
+        },
+        "sparse_score": 40.993,
+        "dense_score": null,
+        "fusion_score": 0.0211,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:Y2CK",
+        "gurmukhi": "ਹੁਕਮੁ ਨ ਜਾਣੈ; ਬਹੁਤਾ ਰੋਵੈ ॥",
+        "transliteration": "hukam na jaanai; bahutaa rovai |",
+        "translation": "One who does not know the Hukam of the Lord's Command cries out in terrible pain.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "One who does not know the Hukam of the Lord's Command cries out in terrible pain.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "EPE",
+          "line_type": "Pankti",
+          "section_description": "The basis of this Raag is steeped in the traditions of mainstream Indian Classical music. Siri Raag is serious and thought provoking in its nature and creates an atmosphere where the listener is led to heed the advice given therein. The listener (the mind) is made aware of the truth of the message and with this ‘education’ is given the strength to face the future with both humility and the ‘gained’ knowledge."
+        },
+        "citation": {
+          "ang": 85,
+          "raag": "Siree Raag",
+          "author": "Guru Amardas Ji",
+          "source_id": "shabados:4.8.7:line:Y2CK",
+          "line_start": 7,
+          "line_end": 7
+        },
+        "sparse_score": 37.4511,
+        "dense_score": null,
+        "fusion_score": 0.0196,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:53WB",
+        "gurmukhi": "ਰਹੈ ਰਜਾਈ; ਹੁਕਮੁ ਪਛਾਣੈ ॥",
+        "transliteration": "rahai rajaaee; hukam pachhaanai |",
+        "translation": "Understanding the Hukam of His Command, one acts according to His Will.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "Understanding the Hukam of His Command, one acts according to His Will.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "M1H",
+          "line_type": "Pankti",
+          "section_description": "Bilaval conveys the emotions of great happiness that come from having attained a goal or achieved an aim. It is an overwhelming feeling of fulfilment, satisfaction and joy, that is experienced when the accomplishments is very important and dear to you. The happiness felt is like laughing out loud, there is no planning or any ulterior motive; it’s just a natural expression of heartfelt happiness arising from a sense of achievement."
+        },
+        "citation": {
+          "ang": 832,
+          "raag": "Raag Bilaaval",
+          "author": "Guru Nanak Dev Ji",
+          "source_id": "shabados:4.8.7:line:53WB",
+          "line_start": 10,
+          "line_end": 10
+        },
+        "sparse_score": 32.8539,
+        "dense_score": null,
+        "fusion_score": 0.0195,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:TQ2L",
+        "gurmukhi": "ਤਾ ਕਉ. ਬਿਘਨੁ ਨ ਲਾਗਈ; ਚਾਲੈ ਹੁਕਮਿ ਰਜਾਈ ॥੩॥",
+        "transliteration": "taa kau. bighan na laagee; chaalai hukam rajaaee |3|",
+        "translation": "No misfortune troubles one who follows the Command of the Lord's Will. ||3||",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "No misfortune troubles one who follows the Command of the Lord's Will. ||3||",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "4X8",
+          "line_type": "Pankti",
+          "section_description": "Aasaa has strong emotions of inspiration and courage. This Raag gives the listener the determination and ambition to put aside any excuses and to proceed with the necessary action to achieve the aim. It generates feelings of passion and zeal to succeed and the energy generated from these feelings enables the listener to find the strength from within to achieve success, even when the achievement seems difficult. The determined mood of this Raag ensures that failure is not an option and motivates the listener to be inspired."
+        },
+        "citation": {
+          "ang": 421,
+          "raag": "Raag Aasaa",
+          "author": "Guru Nanak Dev Ji",
+          "source_id": "shabados:4.8.7:line:TQ2L",
+          "line_start": 14,
+          "line_end": 14
+        },
+        "sparse_score": 37.2773,
+        "dense_score": null,
+        "fusion_score": 0.019,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:Q17R",
+        "gurmukhi": "ਲਾਲੈ ਹੁਕਮੁ ਪਛਾਣਿਆ; ਸਦਾ ਰਹੈ ਰਜਾਈ ॥",
+        "transliteration": "laalai hukam pachhaaniaa; sadaa rahai rajaaee |",
+        "translation": "The slave realizes the Hukam of His Command, and submits to His Will forever.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "The slave realizes the Hukam of His Command, and submits to His Will forever.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "FMQ",
+          "line_type": "Pankti",
+          "section_description": "Maru was traditionally sung on the battlefield in preparation for war. This Raag has an aggressive nature, which creates an inner strength and power to express and emphasise the truth, regardless of the consequences. Maru’s nature conveys the fearlessness and strength that ensures the truth is spoken, no matter what the cost."
+        },
+        "citation": {
+          "ang": 1011,
+          "raag": "Raag Maaroo",
+          "author": "Guru Nanak Dev Ji",
+          "source_id": "shabados:4.8.7:line:Q17R",
+          "line_start": 12,
+          "line_end": 12
+        },
+        "sparse_score": 31.9516,
+        "dense_score": null,
+        "fusion_score": 0.0189,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:9ZUY",
+        "gurmukhi": "ਹੁਕਮਿ ਮਰੈ; ਹੁਕਮੇ ਹੀ ਜੀਵੈ ॥",
+        "transliteration": "hukam marai; hukame hee jeevai |",
+        "translation": "By the Hukam of the Lord's Command, they die; by the Hukam of His Command, they live.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "By the Hukam of the Lord's Command, they die; by the Hukam of His Command, they live.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "93G",
+          "line_type": "Pankti",
+          "section_description": "The emotions in Ramkali are like those of a wise teacher disciplining their student. The student is aware of the pain of learning, but is still conscious of the fact that ultimately it is for the best. In this way Ramkali conveys the change from all that we are familiar with, to something we are certain will be better."
+        },
+        "citation": {
+          "ang": 962,
+          "raag": "Raag Raamkalee",
+          "author": "Guru Arjan Dev Ji",
+          "source_id": "shabados:4.8.7:line:9ZUY",
+          "line_start": 15,
+          "line_end": 15
+        },
+        "sparse_score": 30.9879,
+        "dense_score": null,
+        "fusion_score": 0.0186,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:M4CY",
+        "gurmukhi": "ਆਪਿ ਨਾਥੁ. ਸਭ ਨਥੀਅਨੁ; ਸਭ ਹੁਕਮਿ ਚਲਾਈ ॥",
+        "transliteration": "aap naath. sabh natheean; sabh hukam chalaaee |",
+        "translation": "He Himself is the Lord and Master of all. He has subdued all, and all are under the Hukam of His Command.",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "He Himself is the Lord and Master of all. He has subdued all, and all are under the Hukam of His Command.",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "DM7",
+          "line_type": "Pankti",
+          "section_description": "Sarangs character is soothing and has the ability to extinguish the minds smouldering selfishness and negative nature. The emotions of Sarang quench the minds burning desires, by expressing and highlighting the souls pure and true thoughts. This is a positive and fulfilling change."
+        },
+        "citation": {
+          "ang": 1251,
+          "raag": "Raag Saarang",
+          "author": "Guru Ramdas Ji",
+          "source_id": "shabados:4.8.7:line:M4CY",
+          "line_start": 14,
+          "line_end": 14
+        },
+        "sparse_score": 37.1137,
+        "dense_score": null,
+        "fusion_score": 0.0185,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      },
+      {
+        "verse_id": "shabados:ZKZS",
+        "gurmukhi": "ਨਾਨਕ. ਹੁਕਮੁ ਪਛਾਣਿ ਕੈ; ਤਉ ਖਸਮੈ ਮਿਲਣਾ ॥੧॥",
+        "transliteration": "naanak. hukam pachhaan kai; tau khasamai milanaa |1|",
+        "translation": "O Nanak, recognize the Hukam of the Lord's Command, and merge with your Lord and Master. ||1||",
+        "translations": [
+          {
+            "lang": "en",
+            "text": "O Nanak, recognize the Hukam of the Lord's Command, and merge with your Lord and Master. ||1||",
+            "translator": "Dr. Sant Singh Khalsa"
+          }
+        ],
+        "context": {
+          "shabad_id": "P5M",
+          "line_type": "Pankti",
+          "section_description": "Raag Majh was composed by the Fifth Sikh Guru (Shri Guru Arjun Dev ji). The Raag’s origins are based in Punjabi Folk Music and its essence was inspired by the Majha regions traditions of ‘Ausian’; the game of waiting and yearning for the return of a loved one.The feelings evoked by this Raag have often been compared to that of a mother waiting for her child to return after a long period of separation. She has an anticipation and hope for the child’s return, although at the same moment she is painfully aware of the uncertainty of their return home. This Raag brings to life the emotion of extreme love and this is highlighted by the sorrow and anguish of separation."
+        },
+        "citation": {
+          "ang": 139,
+          "raag": "Raag Maajh",
+          "author": "Guru Angad Dev Ji",
+          "source_id": "shabados:4.8.7:line:ZKZS",
+          "line_start": 3,
+          "line_end": 3
+        },
+        "sparse_score": 36.182,
+        "dense_score": null,
+        "fusion_score": 0.0181,
+        "match_explanation": "Found by script-aware english BM25 across lines and the full Shabad."
+      }
+    ]
+  }
+]

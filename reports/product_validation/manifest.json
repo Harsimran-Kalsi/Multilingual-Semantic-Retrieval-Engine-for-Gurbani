@@ -1,0 +1,23 @@
+{
+  "status": "three_task_comparison_reviewed",
+  "source_lines": 60555,
+  "passages": 5549,
+  "corpus_sha256": "e3ad837efdd65c2c618d19d69c7d2e1a6d010a94aac44556685a2202ffaf155c",
+  "exports": {
+    "sggs_english.txt": {
+      "bytes": 8837048,
+      "sha256": "fd65270f6a54323585731aacb1b6246532be3f6513081d801aaadc7b21778099"
+    },
+    "sggs_multilingual.txt": {
+      "bytes": 16997115,
+      "sha256": "c00a4e83350ae2482a4985fb83bdc127350f4abd0c4146a38529ff513620d0dc"
+    }
+  },
+  "pilot_tasks": 12,
+  "human_participants": 0,
+  "chatgpt_runs": 3,
+  "warning": "Synthetic development pilot. No product superiority or user validation established.",
+  "project_pilot_runs": 3,
+  "participant_note": "Owner agreed to pilot; no observed human sessions yet.",
+  "chatgpt_evidence": "user supplied responses; model and timing unknown"
+}

@@ -1,0 +1,14 @@
+{
+  "task_id": "pilot-01",
+  "system": "ChatGPT file upload",
+  "evidence": "User pasted response in conversation",
+  "model": null,
+  "elapsed_seconds": null,
+  "source_shabad": "DJQ",
+  "source_ang": 6,
+  "verification": {
+    "correct_target": true,
+    "full_passage_provided": true
+  },
+  "assessment": "ChatGPT found the requested source and context on the supplied initial prompt. Project initial keyword/hybrid top eight missed DJQ; phrase-only diagnostic reformulation ranked it first. Interpretation is plausible but not independently expert-graded. One task, no overall superiority conclusion."
+}
