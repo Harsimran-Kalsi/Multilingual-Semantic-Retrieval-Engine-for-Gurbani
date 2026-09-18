@@ -44,6 +44,7 @@ def main() -> None:
     print(f"Total records: {total}")
     print(f"Valid records: {valid}")
     print(f"Invalid records: {invalid}")
+    raise SystemExit(1 if invalid else 0)
 
 
 if __name__ == "__main__":

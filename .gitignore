@@ -3,3 +3,9 @@ __pycache__/
 *.pyc
 *.sqlite
 .env
+
+# Regenerable review artifacts and macOS metadata
+.DS_Store
+reports/relevance_review.html
+reports/product_validation/sggs_english.txt
+reports/product_validation/sggs_multilingual.txt
