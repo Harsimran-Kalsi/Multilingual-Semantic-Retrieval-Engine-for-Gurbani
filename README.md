@@ -1,9 +1,34 @@
-# Multilingual Semantic Retrieval Engine for Gurbani
+# TRACE — Multilingual Search Engine
 
-Explore the Sri Guru Granth Sahib through multilingual source search and
-citation-grounded answers. Ask conceptual questions in English, search common
-Roman Punjabi terms, or enter Gurmukhi—and always trace the result back to its
-exact Ang and Shabad OS source line.
+**TRACE stands for Text Retrieval And Context Exploration.**
+
+TRACE is a search and reading application for the **Sri Guru Granth Sahib**, a
+corpus of Sikh scripture. It searches **60,555 source lines across 5,549 Shabads**
+(passages), accepts English, Gurmukhi, and Roman Punjabi queries, and connects
+ranked results to their original wording and complete passage context.
+
+A reader may remember a translated idea, a Punjabi word written in Latin
+characters, or part of an original line. TRACE brings those entry points into
+one interface: search, inspect the source, and open the surrounding passage.
+Optional AI explanations include citations that link back to retrieved records.
+
+The name reflects the app's workflow: retrieve text, then explore its context.
+The source text and translation are attributed in the [dataset section](#dataset).
+
+[Run locally](#run-app) · [Architecture](#retrieval-and-grounding) ·
+[Evaluation](#evaluation-at-a-glance) · [Source attribution](#dataset)
+
+## How to Use It
+
+1. **Find wording:** search for source text with the default keyword mode.
+2. **Inspect the result:** compare the Gurmukhi, transliteration, and English
+   translation alongside its Ang (page), author, Raag, and stable source ID.
+3. **Read in context:** open the complete Shabad from a result.
+4. **Explore further:** opt into hybrid retrieval or request an AI explanation.
+   Citation-ID checks verify source membership; interpretation still needs review.
+
+The interface currently labels the optional modes **Explore meaning** and
+**Ask Gurbani**. Source search and passage reading work locally without an API key.
 
 ## What It Does
 
@@ -13,7 +38,8 @@ exact Ang and Shabad OS source line.
   stable source IDs.
 - Opens any result into its complete Shabad context.
 - Collects anonymous Helpful / Not relevant ratings on individual results.
-- Generates an optional plain-language overview using only retrieved passages.
+- Can generate an optional plain-language overview, instructed to use the selected
+  retrieved source lines as evidence.
 - Rejects generated answers containing missing or invalid citation IDs before returning them.
 - Supports grounded follow-up questions without treating earlier AI prose as
   scriptural evidence.
@@ -21,26 +47,28 @@ exact Ang and Shabad OS source line.
 ## Retrieval and Grounding
 
 ```text
-Question
-   ├── SQLite FTS5 / BM25 keyword search
-   └── Shabad-level semantic embedding search
-                  ↓
-       Reciprocal Rank Fusion (RRF)
-                  ↓
-       Diverse, exact line citations
-                  ↓
-       Citation-constrained AI answer
+Browser interface → FastAPI
+                       │
+             Retrieval mode selection
+              ├── Keyword: SQLite FTS5 / BM25 (default)
+              └── Hybrid: keyword + embedding search → rank fusion
+                       │
+              Ranked source lines + stable IDs
+              ├── Source cards → complete-passage reader
+              └── Optional AI answer → citation-ID validation
 ```
 
 The full-text and semantic searches operate at Shabad level so a line can be
-found through its surrounding meaning. The UI and generated answer still cite
-the most relevant exact line. Embeddings are stored in the local SQLite index;
+found through its surrounding meaning. The UI and generated answer cite ranked
+source lines. Complete passages are available in the reader; generation receives
+selected lines rather than every line in those passages.
+Embeddings are stored in the local SQLite index;
 no hosted vector database is required.
 
 Lexical retrieval uses a combined Shabad-level BM25 baseline plus independently
 weighted English translation, Roman Punjabi transliteration, Gurmukhi, and
 exact-line views. The combined baseline remains dominant; script-aware views
-act only as measured tie-breakers. The API reports `keyword` or `hybrid`
+provide lower-weight ranking signals. The API reports `keyword` or `hybrid`
 retrieval explicitly. Its `fusion_score` is the Reciprocal Rank Fusion value,
 not a learned reranker score.
 
@@ -51,9 +79,57 @@ reduced exact-source hit rate, so hybrid is an explicit choice rather than an
 automatic upgrade whenever credentials are present. See the
 [validation report](reports/VALIDATION.md) for the complete comparison and limitations.
 
+### Technology
+
+| Layer | Implementation |
+| --- | --- |
+| Browser interface | HTML, CSS, and JavaScript for search, passage reading, and feedback |
+| API and validation | Python, FastAPI, Pydantic, and JSON Schema |
+| Keyword index | SQLite FTS5 with BM25 and separate language views |
+| Semantic retrieval | Shabad embeddings, local NumPy cosine scoring, and reciprocal rank fusion |
+| Optional generation | Configurable OpenAI model with structured answers and citation-ID checks |
+| Evaluation and checks | Reproducible query fixtures, isolated offline tests, and a GitHub Actions workflow |
+
+### Engineering Decisions
+
+- **Keep sources inspectable.** Each line carries the pinned corpus release and
+  source ID; readers can move from a result to its complete passage.
+- **Select defaults using measurements.** Keyword search performed better on the
+  current exact-source lookup benchmark, so hybrid search is an explicit option.
+- **Keep retrieval available during provider failures.** Missing embeddings or
+  embedding-provider failures fall back to keyword search. Failed answer
+  generation preserves the retrieved source results.
+- **Separate reference checks from interpretation.** Missing or invalid citation
+  IDs cause an answer to be rejected. Valid IDs alone do not establish that a
+  generated claim follows from its cited text.
+
+## Evaluation at a Glance
+
+The reproducible lookup benchmark contains **120 source-derived queries** from
+40 sampled passages: 40 English excerpts, 40 corpus Roman-transliteration
+excerpts, and 40 Gurmukhi excerpts.
+
+| Retrieval method | Queries with target passage in top 5 |
+| --- | ---: |
+| Combined-field BM25 | 112 / 120 |
+| Multi-view keyword search | 114 / 120 |
+| Keyword + semantic retrieval (RRF) | 89 / 120 |
+
+These results measure known-source lookup on this fixture. They do not measure
+general answer accuracy, conceptual relevance, or success with independently
+supplied user questions. The committed validation report also records **43
+passing offline tests** for its isolated Gurbani snapshot.
+
+See the [validation report](reports/VALIDATION.md) for methodology, recorded
+results, and limitations, and [Validation and Tests](#validation-and-tests) to
+reproduce the checks. The [comparison pilot](#product-comparison-pilot) records
+additional phrase-lookup failures that remain useful development cases.
+
 ## Run App
 
 ```bash
+git clone https://github.com/Harsimran-Kalsi/Multilingual-Semantic-Retrieval-Engine-for-Gurbani.git
+cd Multilingual-Semantic-Retrieval-Engine-for-Gurbani
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
@@ -78,6 +154,12 @@ OPENAI_MODEL=gpt-5.6-terra
 
 The ignored `.env` file and generated SQLite index are never committed.
 
+Keyword lookup and passage reading run locally. Optional query embeddings send
+the query text to the configured provider; building embeddings sends corpus text.
+Answer generation sends the question, selected source lines, and supplied
+conversation context. API keys belong in the ignored `.env` file, not in browser
+code or committed configuration.
+
 The local BM25 index is created automatically as `data/search.sqlite`. To add
 semantic retrieval, generate the embeddings once:
 
@@ -87,6 +169,9 @@ semantic retrieval, generate the embeddings once:
 
 Later app starts reuse those embeddings. If no key or embeddings are available,
 the indexed BM25 search remains fully functional.
+
+Restart the Uvicorn server after configuring `.env` or building embeddings so
+the application reloads its configuration and embedding index.
 
 ## Questions to Try
 
@@ -133,6 +218,7 @@ Runtime schema: `data/schema/verse.schema.json`.
 - `POST /search` retrieves cited SGGS lines; `mode` is `lexical` (default) or `hybrid`.
 - `POST /ask` retrieves sources and produces a grounded answer.
 - `GET /passage/{verse_id}` returns the complete Shabad for a selected line.
+- `GET /reader/{verse_id}` returns a reading window around a source line.
 - `GET /health` reports server health.
 - `POST /feedback` records a validated local relevance rating.
 
@@ -208,12 +294,24 @@ with complete source passages and exportable human ratings. See the
   question, so ambiguous follow-ups may need their topic restated.
 - No public deployment, production load test, or real-user adoption is claimed.
 
+## Repository Guide
+
+| Path | Contents |
+| --- | --- |
+| [`backend/app/`](backend/app/) | API routes, retrieval, generation, schemas, and feedback storage |
+| [`frontend/index.html`](frontend/index.html) | Browser search and reading interface |
+| [`data/`](data/) | Pinned corpus export, schema, and evaluation fixtures |
+| [`scripts/`](scripts/) | Corpus import, index building, evaluation, and review tools |
+| [`tests/`](tests/) | Offline retrieval, validation, and API checks |
+| [`reports/VALIDATION.md`](reports/VALIDATION.md) | Recorded measurements and their limitations |
+| [`.github/workflows/tests.yml`](.github/workflows/tests.yml) | Automated offline test workflow |
+
 ## Scope
 
 This is a research and reading aid, not an authority on Sikhi or a replacement
 for studying Gurbani with knowledgeable teachers and the wider tradition.
-Generated explanations are limited to the retrieved passages and the included
-English translation, currently attributed to Dr. Sant Singh Khalsa. Exact
+Generated explanations are instructed to use the selected retrieved source lines
+and included English translation, currently attributed to Dr. Sant Singh Khalsa. Exact
 Gurmukhi source lines are always presented so interpretations can be checked.
 
 ## Product comparison pilot
